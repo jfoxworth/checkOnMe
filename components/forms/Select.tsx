@@ -46,16 +46,16 @@ const Select: React.FC<SelectProps> = ({
 
     React.useEffect(() => {
         if (Platform.OS === 'android') {
-            NavigationBar.setBackgroundColorAsync(isDark ? '#0A0A0A' : '#FFFFFF');
+            NavigationBar.setBackgroundColorAsync(colors.bg);
             NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
 
             return () => {
                 // Reset to default theme color when component unmounts
-                NavigationBar.setBackgroundColorAsync(isDark ? '#0A0A0A' : '#FFFFFF');
+                NavigationBar.setBackgroundColorAsync(colors.bg);
                 NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
             };
         }
-    }, [isDark]);
+    }, [isDark, colors.bg]);
 
     const animatedLabelValue = useRef(new Animated.Value(value ? 1 : 0)).current;
 

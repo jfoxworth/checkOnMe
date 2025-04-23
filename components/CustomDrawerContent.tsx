@@ -14,7 +14,7 @@ export default function CustomDrawerContent() {
 
             <View className='flex-col '>
                 <View className='flex-row items-center justify-between w-full'>
-                    <Avatar link="/(drawer)/(tabs)/profile" size="md" className='mb-2' border src="https://mighty.tools/mockmind-api/content/human/5.jpg" />
+                    <Avatar link="/(drawer)/(tabs)/profile" size="md" className='mb-2' border src={require('@/assets/img/thomino.jpg')} />
                     <ThemeToggle />
                 </View>
                 <View className='ml-0'>

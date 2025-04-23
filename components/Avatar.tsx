@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, View, Text, ViewStyle } from 'react-native';
+import { Image, Pressable, View, Text, ViewStyle, ImageSourcePropType } from 'react-native';
 import { Link, router } from 'expo-router';
 import ThemedText from './ThemedText';
 
@@ -50,14 +50,30 @@ const Avatar: React.FC<AvatarProps> = ({
     return <ThemedText className=" font-medium text-center">{initials}</ThemedText>;
   };
 
+  // Convert the src prop to an appropriate Image source prop
+  const getImageSource = (): ImageSourcePropType => {
+    if (!src) {
+      // Return a transparent 1x1 pixel as fallback instead of null
+      return { uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' };
+    }
+
+    // If src is a string (URL), return it as a uri object
+    if (typeof src === 'string') {
+      return { uri: src };
+    }
+
+    // Otherwise it's already a required image or other valid source
+    return src;
+  };
+
   const avatarContent = (
     <View
       className={`rounded-full flex-shrink-0 ${bgColor} ${sizeMap[size]} ${borderStyle} items-center justify-center ${className}`}
       style={style}
-     >
+    >
       {src ? (
         <Image
-          source={{ uri: src }}
+          source={getImageSource()}
           className="rounded-full w-full h-full object-cover"
         />
       ) : (

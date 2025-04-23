@@ -11,6 +11,7 @@ import { Button } from '@/components/Button';
 import ThemedText from '@/components/ThemedText';
 import Grid from '@/components/layout/Grid';
 import AnimatedView from '@/components/AnimatedView';
+import Avatar from '@/components/Avatar';
 
 const products = [
     {
@@ -53,15 +54,17 @@ const products = [
 
 export default function HomeScreen() {
     const rightComponents = [
-        <HeaderIcon hasBadge icon="MessageCircle" href="/screens/chat/list" />,
+        //<HeaderIcon hasBadge icon="MessageCircle" href="/screens/chat/list" />,
         <HeaderIcon hasBadge icon="Bell" href="/screens/notifications" />,
+        <Avatar link="/screens/profile" size="xxs" className='mb-2' src={require('@/assets/img/thomino.jpg')} />
     ];
 
     return (
         <>
             <Header
-                leftComponent={<ThemedText className='text-2xl font-outfit-bold'>Velora.</ThemedText>}  
+                leftComponent={<ThemedText className='text-4xl font-outfit-bold'>Velora<Text className='text-teal-300'>.</Text>  </ThemedText>}  
                 rightComponents={rightComponents}
+                //variant='transparent'
             />
 
             <ThemeScroller
@@ -73,10 +76,10 @@ export default function HomeScreen() {
                         backgroundImage={require('@/assets/img/banner-2.jpg')}
                         className='w-full'
                         rounded='none'
-                        overlayOpacity={0.1}
+                        overlayOpacity={0}
                         href="/screens/products"
                     >
-                        <View className="p-6 w-full h-64 flex flex-col justify-end">
+                        <View className="p-6 w-full h-80 flex flex-col justify-end">
                             <View className="flex-row items-center justify-between">
                                 <View>
                                     <Text className="text-white text-2xl font-bold">Summer 2025</Text>
@@ -93,25 +96,16 @@ export default function HomeScreen() {
                     </CustomCard>
 
 
-                        <CardScroller className='mt-3 mb-3 px-global' space={6}>
-                            
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='outline' rounded='full' size="small" title="Women" />
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='outline' rounded='full' size="small" title="Men" />
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='outline' rounded='full' size="small" title="Kids" />
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='outline' rounded='full' size="small" title="Accessories" />
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='outline' rounded='full' size="small" title="Jewelry" />
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='outline' rounded='full' size="small" title="Sale" />
-                        </CardScroller>
+                        
 
-                        <Section title="New Arrivals" titleSize="lg" className='px-global mt-0' link="/screens/products" linkText="View all">
-                            <CardScroller space={0} className='mt-1'>
+                            <CardScroller space={0} className='mt-0'>
                                 <Card
                                     title="Night dress"
                                     description="$29.99"
                                     rounded="none"
                                     variant='overlay'
-                                    width={260}
-                                    imageHeight={350}
+                                    width={280}
+                                    imageHeight={400}
                                     image={require('@/assets/img/female-1.jpg')}
                                     href="/screens/product-detail"
                                 />
@@ -120,8 +114,8 @@ export default function HomeScreen() {
                                     description="$29.99"
                                     rounded="none"
                                     variant='overlay'
-                                    width={260}
-                                    imageHeight={350}
+                                    width={280}
+                                    imageHeight={400}
                                     image={require('@/assets/img/female-2.jpg')}
                                     href="/screens/product-detail"
                                 />
@@ -130,18 +124,27 @@ export default function HomeScreen() {
                                     description="$29.99"
                                     rounded="none"
                                     variant='overlay'
-                                    width={260}
-                                    imageHeight={350}
+                                    width={280}
+                                    imageHeight={400}
                                     image={require('@/assets/img/male-2.jpg')}
                                     href="/screens/product-detail"
                                 />
                             </CardScroller>
-                        </Section>
 
+
+                        <CardScroller className='mt-3 px-global' space={6}>
+                            
+                            <Button  href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Women" />
+                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Men" />
+                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Kids" />
+                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Accessories" />
+                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Jewelry" />
+                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Sale" />
+                        </CardScroller>
 
                         <Section
-                            title="All Products"
-                            className='mt-8 px-global'
+                            //title="All Products"
+                            className='mt-4 px-global'
                             titleSize='lg'
                         //padding="md"
                         >
@@ -150,7 +153,7 @@ export default function HomeScreen() {
                                     <Card
                                         imageHeight={250}
                                         key={product.id}
-                                        rounded='lg'
+                                        rounded='xl'
                                         title={product.title}
                                         //description={product.description}
                                         image={product.image}

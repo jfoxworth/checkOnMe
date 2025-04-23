@@ -31,16 +31,16 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
     React.useEffect(() => {
         if (Platform.OS === 'android') {
-            NavigationBar.setBackgroundColorAsync(isDark ? '#0A0A0A' : '#FFFFFF');
+            NavigationBar.setBackgroundColorAsync(colors.bg);
             NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
 
             return () => {
                 // Reset to default theme color when modal closes
-                NavigationBar.setBackgroundColorAsync(isDark ? '#0A0A0A' : '#FFFFFF');
+                NavigationBar.setBackgroundColorAsync(colors.bg);
                 NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
             };
         }
-    }, [isDark]);
+    }, [isDark, colors.bg]);
 
     const handleConfirm = () => {
         actionSheetRef.current?.hide();
