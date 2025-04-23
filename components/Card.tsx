@@ -102,18 +102,18 @@ const Card: React.FC<CardProps> = ({
     const renderPrice = () => {
         if (!price) return null;
         return (
-            <ThemedText className={`text-xs  ${variant === 'overlay' ? 'text-white' : 'text-light-subtext dark:text-dark-subtext'}`}>{price}</ThemedText>
+            <ThemedText className={`text-sm font-bold  ${variant === 'overlay' ? 'text-white' : 'text-dark-primary dark:text-white'}`}>{price}</ThemedText>
         );
     };
 
     const renderContent = () => {
         const cardContent = (
-            <View className={`flex-1`} style={style}>
+            <View className={`flex-1 overflow-hidden ${getRoundedClass()} ${className}`} style={style}>
                 <View className="relative">
                     {hasFavorite && (
                         <View className='absolute top-2 right-2 z-50'>
                             <Favorite
-                                initialState={true}
+                                initialState={false}
                                 productName={title}
                                 size={24}
                             />
@@ -156,10 +156,10 @@ const Card: React.FC<CardProps> = ({
                 </View>
 
                 {variant !== 'overlay' && (
-                    <View className="py-2 bg-white dark:bg-dark-primary w-full">
+                    <View className="py-3 w-full flex-1 ">
 
 
-                        <ThemedText className="text-sm font-bold">{title}</ThemedText>
+                        <ThemedText className="text-sm font-semibold mb-0">{title}</ThemedText>
 
                         {description && (
                             <ThemedText numberOfLines={1} className="text-xs text-gray-600 dark:text-gray-300">
@@ -167,7 +167,7 @@ const Card: React.FC<CardProps> = ({
                             </ThemedText>
                         )}
                         {(price || rating) && (
-                            <View className="flex-row items-center mt-1 justify-between">
+                            <View className="flex-row items-center mt-auto justify-between">
                                 {renderPrice()}
                                 {renderRating()}
                             </View>
