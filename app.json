@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "newArchEnabled": true,
+    "name": "Velora",
+    "slug": "velora",
+    "version": "1.0.0",
+    "runtimeVersion": "52.0.0",
+    "scheme": "velora",
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "experiments": {
+      "tsconfigPaths": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "softwareKeyboardLayoutMode": "pan",
+      "navigationBarColor": "transparent",
+      "navigationBarHidden": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "c17ee855-badc-4f5e-a391-ee919cba8d57"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c17ee855-badc-4f5e-a391-ee919cba8d57"
+    },
+    "owner": "thomino"
+  }
+}
