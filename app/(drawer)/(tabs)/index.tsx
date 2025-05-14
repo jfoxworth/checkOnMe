@@ -12,6 +12,9 @@ import ThemedText from '@/components/ThemedText';
 import Grid from '@/components/layout/Grid';
 import AnimatedView from '@/components/AnimatedView';
 import Avatar from '@/components/Avatar';
+import { Chip } from '@/components/Chip';
+import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 
 const products = [
     {
@@ -56,13 +59,15 @@ export default function HomeScreen() {
     const rightComponents = [
         //<HeaderIcon hasBadge icon="MessageCircle" href="/screens/chat/list" />,
         <HeaderIcon hasBadge icon="Bell" href="/screens/notifications" />,
-        <Avatar link="/screens/profile" size="xxs" className='mb-2' src={require('@/assets/img/thomino.jpg')} />
+        <Avatar link="/screens/profile" size="xxs" className='mb-1 ml-1' src={require('@/assets/img/thomino.jpg')} />
     ];
 
     return (
         <>
+
             <Header
-                leftComponent={<ThemedText className='text-4xl font-outfit-bold'>Velora<Text className='text-teal-300'>.</Text>  </ThemedText>}  
+                variant='blurred'
+                leftComponent={<ThemedText className='text-2xl font-outfit-bold'>Velora<Text className='text-teal-300'>.</Text>  </ThemedText>}  
                 rightComponents={rightComponents}
                 //variant='transparent'
             />
@@ -70,6 +75,7 @@ export default function HomeScreen() {
             <ThemeScroller
                 scrollEventThrottle={16}
                 className='p-0'
+                style={{paddingTop: 100}}
             >
                 <View>
                     <CustomCard
@@ -79,7 +85,7 @@ export default function HomeScreen() {
                         overlayOpacity={0}
                         href="/screens/products"
                     >
-                        <View className="p-6 w-full h-80 flex flex-col justify-end">
+                        <View className="p-6 w-full h-[350px] flex flex-col justify-end">
                             <View className="flex-row items-center justify-between">
                                 <View>
                                     <Text className="text-white text-2xl font-bold">Summer 2025</Text>
@@ -95,9 +101,6 @@ export default function HomeScreen() {
                         </View>
                     </CustomCard>
 
-
-                        
-
                             <CardScroller space={0} className='mt-0'>
                                 <Card
                                     title="Night dress"
@@ -105,7 +108,7 @@ export default function HomeScreen() {
                                     rounded="none"
                                     variant='overlay'
                                     width={280}
-                                    imageHeight={400}
+                                    imageHeight={420}
                                     image={require('@/assets/img/female-1.jpg')}
                                     href="/screens/product-detail"
                                 />
@@ -115,7 +118,7 @@ export default function HomeScreen() {
                                     rounded="none"
                                     variant='overlay'
                                     width={280}
-                                    imageHeight={400}
+                                    imageHeight={420}
                                     image={require('@/assets/img/female-2.jpg')}
                                     href="/screens/product-detail"
                                 />
@@ -125,7 +128,7 @@ export default function HomeScreen() {
                                     rounded="none"
                                     variant='overlay'
                                     width={280}
-                                    imageHeight={400}
+                                    imageHeight={420}
                                     image={require('@/assets/img/male-2.jpg')}
                                     href="/screens/product-detail"
                                 />
@@ -133,13 +136,12 @@ export default function HomeScreen() {
 
 
                         <CardScroller className='mt-3 px-global' space={6}>
-                            
-                            <Button  href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Women" />
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Men" />
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Kids" />
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Accessories" />
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Jewelry" />
-                            <Button href="/screens/products" textClassName='text-neutral-500 dark:text-neutral-500' className='border-neutral-500 dark:border-neutral-500' variant='ghost' rounded='full' size="small" title="Sale" />
+                            <Chip onPress={() => router.push('/screens/products')} label="Women" />
+                            <Chip onPress={() => router.push('/screens/products')} label="Men" />
+                            <Chip onPress={() => router.push('/screens/products')} label="Kids" />
+                            <Chip onPress={() => router.push('/screens/products')} label="Accessories" />
+                            <Chip onPress={() => router.push('/screens/products')} label="Jewelry" />
+                            <Chip onPress={() => router.push('/screens/products')} label="Sale" />
                         </CardScroller>
 
                         <Section

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, Text } from 'react-native';
 import { Link, router } from 'expo-router';
 import Input from '@/components/forms/Input';
 import ThemedText from '@/components/ThemedText';
 import { Button } from '@/components/Button';
 import useThemeColors from '@/app/contexts/ThemeColors';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SignupScreen() {
-  const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -120,11 +120,11 @@ export default function SignupScreen() {
   };
 
   return (
-    <View className="flex-1 bg-light-primary dark:bg-dark-primary p-6">
+    <View style={{paddingTop: insets.top}} className="flex-1 bg-light-primary dark:bg-dark-primary p-6">
      
       
-      <View className="mt-8">
-        <ThemedText className="text-4xl font-outfit-bold mb-14">Velora.</ThemedText>
+      <View className="mt-10">
+        <ThemedText className="text-4xl font-outfit-bold mb-14">Velora<Text className='text-sky-500'>.</Text></ThemedText>
         <ThemedText className="text-xl font-bold mb-4">Create account</ThemedText>
         
         <Input

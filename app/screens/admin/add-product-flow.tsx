@@ -13,13 +13,15 @@ import { Ionicons } from '@expo/vector-icons';
 import ProductVariantCreator from '@/components/ProductVariantCreator';
 import { MultipleImagePicker } from '@/components/MultipleImagePicker';
 import ThemedText from '@/components/ThemedText';
-import ThemedScroller from '@/components/ThemeScroller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MultiStep, { Step } from '@/components/MultiStep';
 import { Button } from '@/components/Button';
+import ThemedScroller from '@/components/ThemeScroller';
 
 
 const AddServiceFlow = () => {
     const navigation = useNavigation();
+    const insets = useSafeAreaInsets();
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     
     // Define state for form data
@@ -122,7 +124,7 @@ const AddServiceFlow = () => {
                 </Step>
                 
                 <Step title="Pricing">
-                    <View className="px-4 pt-6">
+                    <ThemedScroller className="px-4 pt-6">
                         <ThemedText className='text-2xl font-medium'>Pricing</ThemedText>
                         <ThemedText className='text-light-subtext dark:text-dark-subtext text-sm mb-4'>Set a base price of the product</ThemedText>
                         <Input
@@ -140,10 +142,12 @@ const AddServiceFlow = () => {
                         </View>
                         <ProductVariantCreator hasStock />
                         <View className='h-20 w-full' />
-                    </View>
+                    </ThemedScroller>
                 </Step>
             </MultiStep>
-            <Button variant="ghost" title="Delete product" iconStart="Trash2" />
+            <View style={{paddingBottom: insets.bottom}}>
+                <Button variant="ghost" title="Delete product" iconStart="Trash2" />
+            </View>
         </View>
     );
 }

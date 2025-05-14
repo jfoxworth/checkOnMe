@@ -3,6 +3,9 @@ import { Drawer } from 'expo-router/drawer';
 import { useThemeColors } from '../contexts/ThemeColors';
 import CustomDrawerContent from '@/components/CustomDrawerContent';
 import { useFonts, Outfit_400Regular, Outfit_700Bold } from '@expo-google-fonts/outfit';
+import { DrawerProvider } from '../contexts/DrawerContext';
+// Create a ref to the drawer instance that can be used across the app
+export const drawerRef = React.createRef();
 
 export default function DrawerLayout() {
     const colors = useThemeColors();
@@ -16,30 +19,40 @@ export default function DrawerLayout() {
     }
 
     return (
-        <Drawer
-            screenOptions={{
-                headerShown: false,
-                drawerType: 'front',
-                drawerPosition: 'right',
-                drawerStyle: {
-                    //backgroundColor: colors.bg,
-                    backgroundColor: 'red',
-                    width: '85%',
-                    flex: 1,
-                },
-                overlayColor: 'rgba(0,0,0, 0.4)',
-                swipeEdgeWidth: 80
-            }}
-            drawerContent={(props) => <CustomDrawerContent />}
-        >
-            <Drawer.Screen
-                name="index"
-                options={{
-                    title: 'Menu',
-                    drawerLabel: 'Menu',
+        <DrawerProvider>
+            <Drawer
+                ref={drawerRef}
+                screenOptions={{
+                    headerShown: false,
+                    drawerType: 'slide',
+                    drawerPosition: 'right',
+                    drawerStyle: {
+                        //backgroundColor: colors.bg,
+                        backgroundColor: 'red',
+                        width: '85%',
+                        flex: 1,
+                    },
+                    overlayColor: 'rgba(0,0,0, 0.4)',
+                    swipeEdgeWidth: 100
                 }}
-                redirect={true}
-            />
-        </Drawer>
+                drawerContent={(props) => <CustomDrawerContent />}
+            >
+                <Drawer.Screen
+                    name="index"
+                    options={{
+                        title: 'Menu',
+                        drawerLabel: 'Menu',
+                    }}
+                //redirect={true}
+                />
+                <Drawer.Screen
+                    name="suggestions"
+                    options={{
+                        title: 'Suggestions',
+                        drawerLabel: 'Suggestions',
+                    }}
+                />
+            </Drawer>
+        </DrawerProvider>
     );
 }

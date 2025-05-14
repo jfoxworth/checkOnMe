@@ -35,9 +35,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "softwareKeyboardLayoutMode": "pan",
-      "navigationBarColor": "transparent",
-      "navigationBarHidden": true
+      "softwareKeyboardLayoutMode": "pan"
     },
     "extra": {
       "router": {

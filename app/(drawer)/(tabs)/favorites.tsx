@@ -9,7 +9,7 @@ import Favorite from '@/components/Favorite';
 import { Link } from 'expo-router';
 import ThemeScroller from '@/components/ThemeScroller';
 import { Placeholder } from '@/components/Placeholder';
-import AnimatedView from '@/components/AnimatedView';
+import Header from '@/components/Header';
 // Mock data for favorites
 const favoriteProducts = [
   {
@@ -52,7 +52,9 @@ const favoriteProducts = [
 
 const FavoritesScreen = () => {
   return (
-    <ThemeScroller>
+    <>
+    <Header />
+      <ThemeScroller>
 
         <Section titleSize='3xl' className='mt-16 pb-10' title="Favorites" subtitle="3 products in your favorites" />
 
@@ -97,7 +99,8 @@ const FavoritesScreen = () => {
           <Placeholder title="No favorites" subtitle="Add some products to your favorites" />
         )}
 
-    </ThemeScroller>
+      </ThemeScroller>
+    </>
   );
 };
 

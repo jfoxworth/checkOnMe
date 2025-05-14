@@ -9,6 +9,7 @@ import { Button } from '@/components/Button';
 import Divider from '@/components/layout/Divider';
 import Section from '@/components/layout/Section';
 import BackHandlerManager from '@/utils/BackHandlerManager';
+import ThemedFooter from '@/components/ThemeFooter';
 
 // Order status types
 type OrderStatus = 'pending' | 'completed' | 'cancelled';
@@ -490,7 +491,7 @@ export default function OrderDetailScreen() {
 
       {/* Actions */}
       {order.status !== 'cancelled' && (
-        <View className="px-global py-4 border-t border-light-secondary dark:border-dark-secondary">
+        <ThemedFooter>
           {order.status === 'pending' ? (
             <View className="flex-row space-x-3">
               <Button
@@ -516,7 +517,7 @@ export default function OrderDetailScreen() {
               className="w-full"
             />
           )}
-        </View>
+        </ThemedFooter>
       )}
     </View>
   );

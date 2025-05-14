@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { View, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Pressable, StyleSheet, Text } from 'react-native';
 import { Stack, Link, router } from 'expo-router';
 import Input from '@/components/forms/Input';
 import ThemedText from '@/components/ThemedText';
 import { Button } from '@/components/Button';
 import Icon from '@/components/Icon';
 import useThemeColors from '@/app/contexts/ThemeColors';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
-  const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -62,14 +62,14 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 bg-light-primary dark:bg-dark-primary p-6">
-     
-      
-      <View className="mt-8">
-      <ThemedText className="text-4xl font-outfit-bold mb-14">Velora.</ThemedText>
+    <View style={{ paddingTop: insets.top }} className="flex-1 bg-light-primary dark:bg-dark-primary p-6">
+
+
+      <View className="mt-10">
+        <ThemedText className="text-4xl font-outfit-bold mb-14">Velora<Text className='text-sky-500'>.</Text></ThemedText>
         <ThemedText className="text-3xl font-bold mb-1">Welcome back</ThemedText>
         <ThemedText className="text-light-subtext dark:text-dark-subtext mb-14">Sign in to your account</ThemedText>
-        
+
         <Input
           label="Email"
           //leftIcon="mail"
@@ -83,7 +83,7 @@ export default function LoginScreen() {
           autoCapitalize="none"
           autoComplete="email"
         />
-        
+
         <Input
           label="Password"
           //leftIcon="lock"
@@ -96,22 +96,22 @@ export default function LoginScreen() {
           isPassword={true}
           autoCapitalize="none"
         />
-        
+
         <Link className='underline text-black dark:text-white text-sm mb-4' href="/screens/forgot-password">
-            Forgot Password?
+          Forgot Password?
         </Link>
-       
-        
-        <Button 
-          title="Login" 
-          onPress={handleLogin} 
+
+
+        <Button
+          title="Login"
+          onPress={handleLogin}
           loading={isLoading}
           size="large"
           className="mb-6"
         />
-        
-        
-        
+
+
+
         <View className="flex-row justify-center">
           <ThemedText className="text-light-subtext dark:text-dark-subtext">Don't have an account? </ThemedText>
           <Link href="/screens/signup" asChild>

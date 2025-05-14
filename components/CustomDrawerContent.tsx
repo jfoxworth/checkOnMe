@@ -6,11 +6,13 @@ import Avatar from './Avatar';
 import Expandable from './Expandable';
 import ThemeToggle from '@/components/ThemeToggle';
 import ThemedScroller from './ThemeScroller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 export default function CustomDrawerContent() {
+    const insets = useSafeAreaInsets();
     return (
-        <ThemedScroller className="flex-1 p-8 bg-white dark:bg-dark-primary">
+        <ThemedScroller style={{paddingTop: insets.top + 30}} className="flex-1 p-8 bg-white dark:bg-dark-primary">
 
             <View className='flex-col '>
                 <View className='flex-row items-center justify-between w-full'>
@@ -31,7 +33,6 @@ export default function CustomDrawerContent() {
                 <NavItem href="/screens/onboarding-start" icon="Lightbulb" label="Onboarding" />
                 <NavItem href="/screens/welcome" icon="Package" label="Welcome" />
                 <NavItem href="/screens/notification-permission" icon="ShieldCheck" label="Permissions" />
-                <NavItem href="/screens/chat/list" icon="MessageCircle" label="Chat" />
                 <NavItem href="/screens/login" icon="ArrowLeft" label="Sign out" />
 
             </View>

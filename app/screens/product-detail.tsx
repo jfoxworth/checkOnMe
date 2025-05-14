@@ -8,8 +8,7 @@ import ThemedText from '@/components/ThemedText';
 import Select from '@/components/forms/Select';
 import { Button } from '@/components/Button';
 import ThemedScroller from '@/components/ThemeScroller';
-import useThemeColors from '@/app/contexts/ThemeColors';
-import SkeletonLoader from '@/components/SkeletonLoader';
+
 import ImageCarousel from '@/components/ImageCarousel';
 
 import { ActionSheetRef } from 'react-native-actions-sheet';
@@ -19,8 +18,7 @@ import Section from '@/components/layout/Section';
 import Card from '@/components/Card';
 import Expandable from '@/components/Expandable';
 import Review from '@/components/Review';
-import { FormTab } from '@/components/forms/FormTabs';
-import FormTabs from '@/components/forms/FormTabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Chip } from '@/components/Chip';
 import Favorite from '@/components/Favorite';
 
@@ -39,6 +37,7 @@ const product = {
 };
 
 const ProductDetail = () => {
+    const insets = useSafeAreaInsets();
     const [selectedSize, setSelectedSize] = useState<string>();
     const [sizeError, setSizeError] = useState<string>();
     const actionSheetRef = useRef<ActionSheetRef>(null);
@@ -75,18 +74,17 @@ const ProductDetail = () => {
 
     return (
         <>
-            <Header  title="" rightComponents={rightComponents} showBackButton />
-            <ThemedScroller className="px-0 bg-light-primary dark:bg-dark-primary">
+            <Header variant='blurred' title="" rightComponents={rightComponents} showBackButton />
+            <ThemedScroller className="px-0 pt-[110px] bg-light-primary dark:bg-dark-primary">
                 <ImageCarousel
                     images={product.images}
-                    height={550}
+                    height={590}
                     paginationStyle="dots"
                 />
 
                 <View className="p-global">
                     <View className='py-global'>
                         <ThemedText className="text-2xl font-semibold">{product.title}</ThemedText>
-                        <ThemedText className="text-lg font-normal mt-2">{product.price}</ThemedText>
                     </View>
                     {/*<FormTabs className='mb-4'>
                         <FormTab title="XS" />
@@ -212,7 +210,7 @@ const ProductDetail = () => {
                 </View>
 
             </ThemedScroller>
-            <View className='px-global border-t border-light-secondary dark:border-dark-secondary pt-3 bg-light-primary dark:bg-dark-primary flex-row items-center justify-between'>
+            <View style={{paddingBottom: insets.bottom}} className='px-6 border-t border-light-secondary dark:border-dark-secondary pt-4 bg-light-primary dark:bg-dark-primary flex-row items-center justify-between'>
                 <View>
                     <ThemedText className='text-xs'>Total</ThemedText>
                     <ThemedText className='text-lg font-bold'>$29.99</ThemedText>
@@ -232,7 +230,7 @@ const ProductDetail = () => {
                     borderTopRightRadius: 20
                 }}
             >
-                <View className="px-4 pb-8 pt-4">
+                <View className="px-4 pt-4">
                     <ThemedText className="text-lg font-bold mb-4">Added to cart</ThemedText>
                     <View className="flex-row items-center mb-6">
                         <Image

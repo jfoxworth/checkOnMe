@@ -4,18 +4,20 @@ import { Tabs, TabList, TabTrigger, TabSlot } from 'expo-router/ui';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { useDrawer } from '@/app/contexts/DrawerContext';
 import React from 'react';
-import Avatar from '@/components/Avatar';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DrawerButton from '@/components/DrawerButton';
+import { BlurView } from 'expo-blur';
 export default function Layout() {
   const colors = useThemeColors();
   const { openDrawer } = useDrawer();
-
+  const insets = useSafeAreaInsets();
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0} // Adjust if needed
     >
+
       <Tabs>
         <TabSlot />
         <TabList
@@ -23,8 +25,12 @@ export default function Layout() {
             backgroundColor: colors.bg,
             borderTopColor: colors.secondary,
             borderTopWidth: 1,
+            paddingBottom: insets.bottom,
+
+
           }}
         >
+
           <TabTrigger name="home" href="/" asChild>
             <TabButton labelAnimated={true} icon="Home">Home</TabButton>
           </TabTrigger>
@@ -38,12 +44,12 @@ export default function Layout() {
             <TabButton hasBadge labelAnimated={true} icon="ShoppingCart">
               Cart</TabButton>
           </TabTrigger>
-          <TabTrigger name="menu" asChild href="null">
-            <TabButton icon="Menu" onPress={openDrawer} >
-              Menu
-            </TabButton>
-          </TabTrigger>
-          
+
+          <View className="w-1/5 flex items-center justify-center opacity-40   ">
+            <DrawerButton className='w-full' />
+          </View>
+
+
 
           {/****Items that are on this level but hidden from tabBar
           <TabTrigger name="profile" href="/(drawer)/(tabs)/profile" asChild style={{ display: 'none' }}>

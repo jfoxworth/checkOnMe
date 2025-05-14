@@ -10,6 +10,7 @@ import React from 'react';
 import Icon from '@/components/Icon';
 const { width } = Dimensions.get('window');
 const windowWidth = Dimensions.get('window').width;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const slides = [
     {
@@ -34,6 +35,7 @@ const slides = [
 
 export default function OnboardingScreen() {
     const colors = useThemeColors();
+    const insets = useSafeAreaInsets();
     const [currentIndex, setCurrentIndex] = useState(0);
     const flatListRef = useRef(null);
 
@@ -44,8 +46,8 @@ export default function OnboardingScreen() {
 
     return (
         <>
-        <View className="flex-1 relative bg-light-primary dark:bg-dark-primary">
-            <View className='absolute top-global right-global z-50'>
+        <View style={{paddingTop: insets.top, paddingBottom: insets.bottom}} className="flex-1 relative bg-light-primary dark:bg-dark-primary">
+            <View className='p-global justify-end items-end'>
                 <ThemeToggle />
             </View>
             <FlatList

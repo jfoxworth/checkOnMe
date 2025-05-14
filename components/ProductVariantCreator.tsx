@@ -151,7 +151,8 @@ const ProductVariantCreator: React.FC<ProductVariantCreatorProps> = ({ hasStock 
                                     <View className='w-[80px]'>
                                         <Input
                                             label="Price"
-                                            //className="h-[55px]"
+                                            className="h-[40px]"
+                                            variant='classic'
                                             containerClassName='mb-0'
                                             //placeholder="Price"
                                             keyboardType="numeric"
@@ -169,9 +170,10 @@ const ProductVariantCreator: React.FC<ProductVariantCreatorProps> = ({ hasStock 
                                             <Input
                                                 label="Stock"
                                                 containerClassName="mb-0 w-20 ml-2"
-                                                className="h-[55px]"
+                                                className="h-[40px]"
                                                 //placeholder="Stock"
                                                 keyboardType="numeric"
+                                                variant='classic'
                                                 //value={variant.stock}
                                                 onFocus={() => {
                                                     let updatedVariants = [...variants];

@@ -8,6 +8,7 @@ import { Button } from '@/components/Button';
 import useThemeColors from '@/app/contexts/ThemeColors';
 import Input from '@/components/forms/Input';
 import ThemedScroller from '@/components/ThemeScroller';
+import ThemedFooter from '@/components/ThemeFooter';
 
 interface ReviewScreenProps {
     product: {
@@ -106,13 +107,13 @@ const ReviewScreen = () => {
 
 
             </ThemedScroller>
-            <View className='p-global pb-2 bg-light-primary dark:bg-dark-primary'>
+            <ThemedFooter>
                 <Button
                     title="Submit Review"
                     onPress={handleSubmit}
                     disabled={rating === 0 || !review.trim()}
                 />
-            </View>
+            </ThemedFooter>
         </>
     );
 };

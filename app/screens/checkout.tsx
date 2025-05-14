@@ -8,13 +8,10 @@ import { Button } from '@/components/Button';
 import Input from '@/components/forms/Input';
 import Icon from '@/components/Icon';
 import { ActionSheetRef } from 'react-native-actions-sheet';
-import ActionSheetThemed from '@/components/ActionSheetThemed';
-import Expandable from '@/components/Expandable';
-import Toast from '@/components/Toast';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MultiStep, { Step } from '@/components/MultiStep';
 import Section from '@/components/layout/Section';
 import Selectable from '@/components/forms/Selectable';
-import Divider from '@/components/layout/Divider';
 import useThemeColors from '../contexts/ThemeColors';
 import Toggle from '@/components/Toggle';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -111,7 +108,6 @@ const ShippingStep = () => {
         // In a real app, you would update the SAVED_ADDRESSES array
         setIsAddressModalVisible(false);
     };
-
     return (
         <View className="flex-1 p-4">
             <Section title="Shipping Address" titleSize='2xl' subtitle="Choose from saved addresses" className='mt-4 mb-8' />
@@ -414,9 +410,11 @@ const PaymentStep = () => {
     );
 };
 
-const ReviewStep = () => (
-    <ScrollView className="flex-1">
-        <Section title="Order review" titleSize='2xl' subtitle="Review your order details" className='mt-4 mb-4 px-global' />
+const ReviewStep = () => {
+    const insets = useSafeAreaInsets();
+    return (
+        <ScrollView className="flex-1">
+            <Section title="Order review" titleSize='2xl' subtitle="Review your order details" className='mt-4 mb-4 px-global' />
 
         {/* Products */}
         <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
@@ -503,11 +501,12 @@ const ReviewStep = () => (
                 </View>
             </View>
         </View>
-        <View className='px-global pb-global'>
+        <View className='px-global' style={{paddingBottom: insets.bottom}}>
             <Button title="Place Order" className='mt-4' />
         </View>
-    </ScrollView>
-);
+        </ScrollView>
+    );
+};
 
 const CheckoutScreen = () => {
     const router = useRouter();

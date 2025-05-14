@@ -250,7 +250,7 @@ export default function MultiStep({
       )}
 
       {showStepIndicator && (
-        <View className="flex-row justify-center items-center py-2 px-4 w-full rounded-full overflow-hidden">
+        <View className="flex-row justify-center items-center py-4 px-4 w-full rounded-full overflow-hidden">
           <View className='rounded-full flex-row w-full overflow-hidden'>
             {steps.map((step, index) => (
               <React.Fragment key={step.key}>
