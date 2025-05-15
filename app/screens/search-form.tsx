@@ -47,16 +47,16 @@ const SearchScreen = () => {
               <Icon name="ArrowLeft" onPress={() => router.back()} className="absolute top-1.5 left-1.5 z-50" size={20} />
 
               <TextInput
-                ref={inputRef}
+                //ref={inputRef}
                 className='py-3 pl-10 pr-3 rounded-lg text-black dark:text-white'
                 placeholder='Search here'
                 placeholderTextColor={colors.placeholder}
-                onChangeText={setSearchQuery}
-                value={searchQuery}
+                //onChangeText={setSearchQuery}
+                //value={searchQuery}
                 returnKeyType="done"
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setIsInputFocused(searchQuery.length > 0)} // Only unfocus if there's no query
-                autoFocus={true}
+                //onFocus={() => setIsInputFocused(true)}
+                //onBlur={() => setIsInputFocused(searchQuery.length > 0)} // Only unfocus if there's no query
+                autoFocus={false}
               />
 
               {/* Render the 'x' icon only when the search query is not empty */}
