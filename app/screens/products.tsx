@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions } from 'react-native';
+import { Dimensions, ImageBackground, Pressable, View, Text } from 'react-native';
 import Header from '@/components/Header';
 import Grid from '@/components/layout/Grid';
 import Card from '@/components/Card';
@@ -14,6 +14,8 @@ import ThemeTabs, { ThemeTab } from '@/components/ThemeTabs';
 import FloatingButton from '@/components/FloatingButton';
 import ThemeScroller from '@/components/ThemeScroller';
 import AnimatedView from '@/components/AnimatedView';
+import { Link } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 // Sample product data
@@ -76,27 +78,19 @@ export default function ProductsScreen() {
 
             <ThemeScroller>
             <AnimatedView animation='fadeIn' duration={300} playOnlyOnce={false}>
-                <CardScroller >
-                <Card
-                    title="Summer Collection"
-                    description="New arrivals for the season"
-                    image={require('@/assets/img/banner.jpg')}
-                    variant="overlay"
-                    imageHeight={250}
-                    width={width - 50}
-                    className="mt-2"
-                    rounded="lg"
-                />
-                <Card
-                    title="Summer Collection"
-                    description="New arrivals for the season"
-                    image={require('@/assets/img/banner-3.jpg')}
-                    variant="overlay"
-                    imageHeight={250}
-                    width={width - 50}
-                    className="mt-2"
-                    rounded="lg"
-                />
+                <CardScroller className='mt-2' >
+                    <Banner
+                        title="Summer Collection"
+                        description="New arrivals for the season"
+                        image={require('@/assets/img/banner.jpg')}
+                    />
+                    <Banner
+                        title="Summer Collection"
+                        description="New arrivals for the season"
+                        image={require('@/assets/img/banner-2.jpg')}
+                    />
+                    
+                
                 </CardScroller>
                 <TabContent />
             </AnimatedView>
@@ -118,7 +112,7 @@ const TabContent = () => {
                 titleSize='lg'
             //padding="md"
             >
-                <Grid className='mt-2' columns={2} spacing={20} >
+                <Grid className='mt-2' columns={2} spacing={10} >
                     {products.map((product) => (
                         <Card
                             imageHeight={250}
@@ -139,4 +133,24 @@ const TabContent = () => {
             </Section>
         </>
     );
+}
+
+const  Banner  = (props: any) => {
+    return (
+            <Pressable className='w-[340px] h-[240px] rounded-lg overflow-hidden'>
+                <ImageBackground
+                    source={props.image}
+                    className='w-full h-full'>
+                    <LinearGradient
+                        colors={['transparent', 'rgba(0,0,0,0.3)']}
+                        className='w-full h-full'
+                    >
+                        <View className='flex-1 items-start justify-end p-4'>
+                            <Text className='text-white text-base font-bold'>{props.title}</Text>
+                            <Text className='text-white text-xs'>{props.description}</Text>
+                        </View>
+                    </LinearGradient>
+                </ImageBackground>
+            </Pressable>
+    )
 }
