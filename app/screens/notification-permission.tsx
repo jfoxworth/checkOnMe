@@ -1,18 +1,12 @@
 import React from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import * as Notifications from 'expo-notifications';
 import ThemedText from '@/components/ThemedText';
 import { Button } from '@/components/Button';
 import Icon from '@/components/Icon';
 
 export default function NotificationPermissionScreen() {
-  const handleAllowNotifications = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status === 'granted') {
-      router.replace('/screens/location-permission');
-    }
-  };
+
 
   const handleSkip = () => {
     router.replace('/screens/location-permission');
@@ -33,7 +27,6 @@ export default function NotificationPermissionScreen() {
       <View className="gap-1">
         <Button
           title="Allow Notifications"
-          onPress={handleAllowNotifications}
           size="large"
         />
         <Button

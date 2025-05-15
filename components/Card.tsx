@@ -26,7 +26,7 @@ interface CardProps {
     iconColor?: string;
     imageHeight?: number;
     showOverlay?: boolean;
-    hasFavorite?: boolean;  
+    hasFavorite?: boolean;
     overlayGradient?: readonly [string, string];
     width?: any;
     rounded?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
@@ -49,7 +49,7 @@ const Card: React.FC<CardProps> = ({
     badge,
     hasFavorite = false,
     badgeColor = '#000000',
-    imageHeight = 200,
+    imageHeight = 220,
     showOverlay = true,
     overlayGradient = ['transparent', 'rgba(0,0,0,0.3)'] as readonly [string, string],
     rounded = 'lg',
@@ -120,31 +120,33 @@ const Card: React.FC<CardProps> = ({
                         </View>
                     )}
                     {variant === 'overlay' ? (
-                        <ImageBackground
-                            source={typeof image === 'string' ? { uri: image } : image}
-                            className={`w-full overflow-hidden ${getRoundedClass()}`}
-                            style={{ height: imageHeight || 200 }}
-                        >
-                            {showOverlay && (
-                                <LinearGradient
-                                    colors={overlayGradient}
-                                    className='w-full h-full relative flex flex-col justify-end'
-                                >
-                                    <View className="p-4 absolute bottom-0 left-0 right-0">
-                                        <Text className="text-base font-bold text-white">{title}</Text>
-                                        {description && (
-                                            <Text numberOfLines={1} className="text-xs text-white">{description}</Text>
-                                        )}
-                                        {(price || rating) && (
-                                            <View className="flex-row items-center mt-1 justify-between">
-                                                {renderPrice()}
-                                                {renderRating()}
-                                            </View>
-                                        )}
-                                    </View>
-                                </LinearGradient>
-                            )}
-                        </ImageBackground>
+                        <View style={{ height: imageHeight || 200 }}>
+                            <ImageBackground
+                                source={typeof image === 'string' ? { uri: image } : image}
+                                className={`w-full h-full overflow-hidden ${getRoundedClass()}`}
+                                
+                            >
+                                {showOverlay && (
+                                    <LinearGradient
+                                        colors={overlayGradient}
+                                        className='w-full h-full relative flex flex-col justify-end'
+                                    >
+                                        <View className="p-4 absolute bottom-0 left-0 right-0">
+                                            <Text className="text-base font-bold text-white">{title}</Text>
+                                            {description && (
+                                                <Text numberOfLines={1} className="text-xs text-white">{description}</Text>
+                                            )}
+                                            {(price || rating) && (
+                                                <View className="flex-row items-center mt-1 justify-between">
+                                                    {renderPrice()}
+                                                    {renderRating()}
+                                                </View>
+                                            )}
+                                        </View>
+                                    </LinearGradient>
+                                )}
+                            </ImageBackground>
+                        </View>
                     ) : (
                         <Image
                             source={typeof image === 'string' ? { uri: image } : image}

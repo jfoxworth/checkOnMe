@@ -2,7 +2,7 @@ import Header, { HeaderIcon } from '@/components/Header';
 import ThemeScroller from '@/components/ThemeScroller';
 import React from 'react';
 import CustomCard from '@/components/CustomCard';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, ImageBackground } from 'react-native';
 import Icon from '@/components/Icon';
 import Section from '@/components/layout/Section';
 import { CardScroller } from '@/components/CardScroller';
@@ -13,8 +13,9 @@ import Grid from '@/components/layout/Grid';
 import AnimatedView from '@/components/AnimatedView';
 import Avatar from '@/components/Avatar';
 import { Chip } from '@/components/Chip';
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const products = [
     {
@@ -67,17 +68,17 @@ export default function HomeScreen() {
 
             <Header
                 variant='blurred'
-                leftComponent={<ThemedText className='text-2xl font-outfit-bold'>Velora<Text className='text-teal-300'>.</Text>  </ThemedText>}  
+                leftComponent={<ThemedText className='text-2xl font-outfit-bold'>Velora<Text className='text-teal-300'>.</Text>  </ThemedText>}
                 rightComponents={rightComponents}
-                //variant='transparent'
+            //variant='transparent'
             />
 
             <ThemeScroller
                 scrollEventThrottle={16}
                 className='p-0'
-                style={{paddingTop: 100}}
+                style={{ paddingTop: 100 }}
             >
-                <View>
+                <View className='flex-1'>
                     <CustomCard
                         backgroundImage={require('@/assets/img/banner-2.jpg')}
                         className='w-full'
@@ -101,76 +102,63 @@ export default function HomeScreen() {
                         </View>
                     </CustomCard>
 
-                            <CardScroller space={0} className='mt-0'>
-                                <Card
-                                    title="Night dress"
-                                    description="$29.99"
-                                    rounded="none"
-                                    variant='overlay'
-                                    width={280}
-                                    imageHeight={420}
-                                    image={require('@/assets/img/female-1.jpg')}
-                                    href="/screens/product-detail"
-                                />
-                                <Card
-                                    title="Summer jacket"
-                                    description="$29.99"
-                                    rounded="none"
-                                    variant='overlay'
-                                    width={280}
-                                    imageHeight={420}
-                                    image={require('@/assets/img/female-2.jpg')}
-                                    href="/screens/product-detail"
-                                />
-                                <Card
-                                    title="Casual jacket"
-                                    description="$29.99"
-                                    rounded="none"
-                                    variant='overlay'
-                                    width={280}
-                                    imageHeight={420}
-                                    image={require('@/assets/img/male-2.jpg')}
-                                    href="/screens/product-detail"
-                                />
-                            </CardScroller>
+                    <CardScroller space={0} className='mt-0'>
+                        <FeaturedProduct
+                            title="Night dress"
+                            price="$29.99"
+                            image={require('@/assets/img/female-1.jpg')}
+                        />
+                        <FeaturedProduct
+                            title="Summer jacket"
+                            price="$29.99"
+                            image={require('@/assets/img/female-2.jpg')}
+                        />
+                        <FeaturedProduct
+                            title="Casual jacket"
+                            price="$29.99"
+                            image={require('@/assets/img/male-2.jpg')}
+                        />
+
+                    </CardScroller>
 
 
-                        <CardScroller className='mt-3 px-global' space={6}>
-                            <Chip onPress={() => router.push('/screens/products')} label="Women" />
-                            <Chip onPress={() => router.push('/screens/products')} label="Men" />
-                            <Chip onPress={() => router.push('/screens/products')} label="Kids" />
-                            <Chip onPress={() => router.push('/screens/products')} label="Accessories" />
-                            <Chip onPress={() => router.push('/screens/products')} label="Jewelry" />
-                            <Chip onPress={() => router.push('/screens/products')} label="Sale" />
-                        </CardScroller>
+                    <CardScroller className='mt-3 px-global' space={6}>
+                        <Chip onPress={() => router.push('/screens/products')} label="Women" />
+                        <Chip onPress={() => router.push('/screens/products')} label="Men" />
+                        <Chip onPress={() => router.push('/screens/products')} label="Kids" />
+                        <Chip onPress={() => router.push('/screens/products')} label="Accessories" />
+                        <Chip onPress={() => router.push('/screens/products')} label="Jewelry" />
+                        <Chip onPress={() => router.push('/screens/products')} label="Sale" />
+                    </CardScroller>
 
-                        <Section
-                            //title="All Products"
-                            className='mt-4 px-global'
-                            titleSize='lg'
-                        //padding="md"
-                        >
-                            <Grid className='mt-2' columns={2} spacing={20} >
-                                {products.map((product) => (
-                                    <Card
-                                        imageHeight={250}
-                                        key={product.id}
-                                        rounded='xl'
-                                        title={product.title}
-                                        //description={product.description}
-                                        image={product.image}
-                                        price={product.price}
-                                        //rating={product.rating}
-                                        badge={product.badge}
-                                        //badgeColor={product.badgeColor}
-                                        href={`/screens/product-detail?id=${product.id}`}
-                                    //variant='overlay'
-                                    />
-                                ))}
-                            </Grid>
-                        </Section>
+                    <Section
+                        //title="All Products"
+                        className='mt-4 px-2'
+                        titleSize='lg'
+                    //padding="md"
+                    >
+                        <Grid className='mt-2' columns={2} spacing={5} >
+                            {products.map((product) => (
+                                <Card
+                                    imageHeight={250}
+                                    key={product.id}
+                                    rounded='none'
+                                    title={product.title}
+                                    //description={product.description}
+                                    image={product.image}
+                                    price={product.price}
+                                    //rating={product.rating}
+                                    badge={product.badge}
+                                    //badgeColor={product.badgeColor}
+                                    href={`/screens/product-detail?id=${product.id}`}
+                                //variant='overlay'
+                                />
+                            ))}
+                        </Grid>
+                    </Section>
 
                 </View>
+                <View className='h-[50px]' />
             </ThemeScroller>
         </>
     );
@@ -185,5 +173,28 @@ const CategorySelect = (props: any) => {
             </View>
             <ThemedText className="text-xs">{props.title}</ThemedText>
         </Pressable>
+    )
+}
+
+
+const FeaturedProduct = (props: any) => {
+    return (
+        <Link href="/screens/product-detail" asChild>
+            <Pressable className='w-[300px] h-[400px]'>
+                <ImageBackground
+                    source={props.image}
+                    className='w-full h-full'>
+                    <LinearGradient
+                        colors={['transparent', 'rgba(0,0,0,0.3)']}
+                        className='w-full h-full'
+                    >
+                        <View className='flex-1 items-start justify-end p-4'>
+                            <Text className='text-white text-base font-bold'>{props.title}</Text>
+                            <Text className='text-white text-xs mb-3'>{props.price}</Text>
+                        </View>
+                    </LinearGradient>
+                </ImageBackground>
+            </Pressable>
+        </Link>
     )
 }
