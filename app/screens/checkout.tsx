@@ -17,6 +17,7 @@ import Toggle from '@/components/Toggle';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import BackHandlerManager from '@/utils/BackHandlerManager';
+import AnimatedView from '@/components/AnimatedView';
 
 type CheckoutStep = 'shipping' | 'payment' | 'review' | 'success';
 
@@ -110,8 +111,19 @@ const ShippingStep = () => {
     };
     return (
         <View className="flex-1 p-4">
-            <Section title="Shipping Address" titleSize='2xl' subtitle="Choose from saved addresses" className='mt-4 mb-8' />
-            
+
+
+            <View className='w-full flex-row items-center justify-between mb-4'>
+                <View>
+                    <ThemedText className='text-2xl font-bold'>Shipping Address</ThemedText>
+                    <ThemedText>Choose from saved addresses</ThemedText>
+                </View>
+                <AnimatedView animation="slideInRight" duration={700} delay={100} className='items-center pr-2' playOnlyOnce={true}>
+                    <Image source={require('@/assets/img/delivery.png')} className='h-32 w-32' />
+                </AnimatedView>
+            </View>
+
+
             {SAVED_ADDRESSES.map(address => (
                 <Selectable
                     key={address.id}
@@ -123,7 +135,7 @@ const ShippingStep = () => {
                     containerClassName="mb-4"
                 />
             ))}
-            
+
             <Button
                 title="Add New Address"
                 iconStart="Plus"
@@ -131,7 +143,7 @@ const ShippingStep = () => {
                 className="mb-8"
                 onPress={handleAddAddress}
             />
-            
+
             <Section title="Shipping options" titleSize='lg' className='mt-8 mb-4' />
             <Selectable
                 title="Standard Shipping"
@@ -165,75 +177,75 @@ const ShippingStep = () => {
                                 <Icon name="X" size={24} />
                             </TouchableOpacity>
                         </View>
-                        
+
                         <ScrollView className='pt-4'>
                             <Input
                                 label="Full Name"
                                 value={currentAddress?.fullName}
-                                onChangeText={(text) => 
-                                    setCurrentAddress(prev => prev ? {...prev, fullName: text} : null)
+                                onChangeText={(text) =>
+                                    setCurrentAddress(prev => prev ? { ...prev, fullName: text } : null)
                                 }
                             />
-                            
+
                             <Input
                                 label="Street Address"
                                 value={currentAddress?.address}
-                                onChangeText={(text) => 
-                                    setCurrentAddress(prev => prev ? {...prev, address: text} : null)
+                                onChangeText={(text) =>
+                                    setCurrentAddress(prev => prev ? { ...prev, address: text } : null)
                                 }
                             />
-                            
+
                             <Input
                                 label="City"
                                 value={currentAddress?.city}
-                                onChangeText={(text) => 
-                                    setCurrentAddress(prev => prev ? {...prev, city: text} : null)
+                                onChangeText={(text) =>
+                                    setCurrentAddress(prev => prev ? { ...prev, city: text } : null)
                                 }
                             />
-                                
+
                             <Input
                                 label="State"
                                 value={currentAddress?.state}
-                                onChangeText={(text) => 
-                                    setCurrentAddress(prev => prev ? {...prev, state: text} : null)
+                                onChangeText={(text) =>
+                                    setCurrentAddress(prev => prev ? { ...prev, state: text } : null)
                                 }
                             />
-                            
+
                             <Input
                                 label="ZIP Code"
                                 value={currentAddress?.zipCode}
-                                onChangeText={(text) => 
-                                    setCurrentAddress(prev => prev ? {...prev, zipCode: text} : null)
+                                onChangeText={(text) =>
+                                    setCurrentAddress(prev => prev ? { ...prev, zipCode: text } : null)
                                 }
                             />
-                            
+
                             <Input
                                 label="Country"
                                 value={currentAddress?.country}
-                                onChangeText={(text) => 
-                                    setCurrentAddress(prev => prev ? {...prev, country: text} : null)
+                                onChangeText={(text) =>
+                                    setCurrentAddress(prev => prev ? { ...prev, country: text } : null)
                                 }
                             />
-                            
+
                             <Input
                                 label="Phone Number"
                                 value={currentAddress?.phone}
-                                onChangeText={(text) => 
-                                    setCurrentAddress(prev => prev ? {...prev, phone: text} : null)
+                                onChangeText={(text) =>
+                                    setCurrentAddress(prev => prev ? { ...prev, phone: text } : null)
                                 }
                             />
-                            
+
                             <View className="flex-row items-center justify-between py-4">
                                 <ThemedText>Set as default address</ThemedText>
-                                <Toggle 
+                                <Toggle
                                     value={currentAddress?.isDefault || false}
-                                    onChange={(value: boolean) => 
-                                        setCurrentAddress(prev => prev ? {...prev, isDefault: value} : null)
+                                    onChange={(value: boolean) =>
+                                        setCurrentAddress(prev => prev ? { ...prev, isDefault: value } : null)
                                     }
                                 />
                             </View>
                         </ScrollView>
-                        
+
                         <View className="flex-row mt-4 gap-4">
                             <Button
                                 title="Cancel"
@@ -263,7 +275,7 @@ const PaymentStep = () => {
     const [cvv, setCvv] = useState('');
     const [isDefault, setIsDefault] = useState(false);
     const colors = useThemeColors();
-    
+
     // Payment methods similar to those in payments.tsx
     const paymentMethods = [
         { id: '1', type: 'visa', label: 'Visa', lastFour: '4242', expiryDate: '05/25', icon: 'CreditCard' as const },
@@ -288,8 +300,17 @@ const PaymentStep = () => {
 
     return (
         <View className="flex-1 p-4">
-            <Section title="Payment method" titleSize='2xl' subtitle="Choose a payment method" className='mt-4 mb-8' />
-            
+
+            <View className='w-full flex-row items-center justify-between mb-4'>
+                <View>
+                    <ThemedText className='text-2xl font-bold'>Payment method</ThemedText>
+                    <ThemedText>Choose a payment method</ThemedText>
+                </View>
+                <AnimatedView animation="scaleIn" delay={100} duration={700} className='items-center' playOnlyOnce={true}>
+                    <Image source={require('@/assets/img/payment.png')} className='h-32 w-32' />
+                </AnimatedView>
+            </View>
+
             {paymentMethods.map(method => (
                 <Selectable
                     key={method.id}
@@ -301,7 +322,7 @@ const PaymentStep = () => {
                     containerClassName="mb-4"
                 />
             ))}
-            
+
             <Selectable
                 title="Apple Pay"
                 customIcon={<AntDesign name="apple-o" size={24} color={colors.text} />}
@@ -310,7 +331,7 @@ const PaymentStep = () => {
                 onPress={() => setSelectedPayment('apple')}
                 containerClassName="mb-4"
             />
-            
+
             <Selectable
                 title="Google Pay"
                 customIcon={<AntDesign name="google" size={24} color={colors.text} />}
@@ -319,7 +340,7 @@ const PaymentStep = () => {
                 onPress={() => setSelectedPayment('google')}
                 containerClassName='mb-4'
             />
-            
+
             <Button
                 title="Add New Card"
                 iconStart="Plus"
@@ -414,96 +435,104 @@ const ReviewStep = () => {
     const insets = useSafeAreaInsets();
     return (
         <ScrollView className="flex-1">
-            <Section title="Order review" titleSize='2xl' subtitle="Review your order details" className='mt-4 mb-4 px-global' />
+            <View className='w-full flex-row items-center justify-between mb-4 px-global'>
+                <View className='flex-1'>
+                    <ThemedText className='text-2xl font-bold'>Review order</ThemedText>
+                    <ThemedText>Please check your order details</ThemedText>
+                </View>
+                <AnimatedView animation="scaleIn" delay={100} duration={700} className='items-center' playOnlyOnce={true}>
+                    <Image source={require('@/assets/img/review.png')} className='h-32 w-32' />
+                </AnimatedView>
+            </View>
 
-        {/* Products */}
-        <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
-            <ThemedText className="text-lg font-bold mb-4">Products</ThemedText>
-            <View className="">
-                <View className="flex-row mb-4 items-center">
-                    <Image source={require('@/assets/img/male-2.jpg')} className="w-20 h-28 rounded-lg" />
-                    <View className="flex-1 ml-4">
-                        <ThemedText className="font-bold">Classic White T-Shirt</ThemedText>
-                        <ThemedText className="text-light-subtext dark:text-dark-subtext">Size: L • Color: White</ThemedText>
-                        <ThemedText className="font-bold mt-1">$49.99</ThemedText>
+            {/* Products */}
+            <View className="px-global pb-7 border-b-4 border-light-secondary dark:border-dark-darker">
+                <ThemedText className="text-lg font-bold mb-4">Products</ThemedText>
+                <View className="">
+                    <View className="flex-row mb-4 items-center">
+                        <Image source={require('@/assets/img/male-2.jpg')} className="w-20 h-28 rounded-lg" />
+                        <View className="flex-1 ml-4">
+                            <ThemedText className="font-bold">Classic White T-Shirt</ThemedText>
+                            <ThemedText className="text-light-subtext dark:text-dark-subtext">Size: L • Color: White</ThemedText>
+                            <ThemedText className="font-bold mt-1">$49.99</ThemedText>
+                        </View>
+                    </View>
+                    <View className="flex-row items-center">
+                        <Image source={require('@/assets/img/female-2.jpg')} className="w-20 h-28 rounded-lg" />
+                        <View className="flex-1 ml-4">
+                            <ThemedText className="font-bold">Summer Dress</ThemedText>
+                            <ThemedText className="text-light-subtext dark:text-dark-subtext">Size: M • Color: Blue</ThemedText>
+                            <ThemedText className="font-bold mt-1">$59.99</ThemedText>
+                        </View>
                     </View>
                 </View>
-                <View className="flex-row items-center">
-                    <Image source={require('@/assets/img/female-2.jpg')} className="w-20 h-28 rounded-lg" />
-                    <View className="flex-1 ml-4">
-                        <ThemedText className="font-bold">Summer Dress</ThemedText>
-                        <ThemedText className="text-light-subtext dark:text-dark-subtext">Size: M • Color: Blue</ThemedText>
-                        <ThemedText className="font-bold mt-1">$59.99</ThemedText>
+            </View>
+
+            {/* Shipping Address */}
+            <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
+                <ThemedText className="text-lg font-bold mb-4">Shipping Address</ThemedText>
+                <View className="">
+                    <ThemedText className="font-bold">John Doe</ThemedText>
+                    <ThemedText className="text-light-subtext dark:text-dark-subtext">
+                        123 Main Street{'\n'}
+                        Apt 4B{'\n'}
+                        San Francisco, CA 94105{'\n'}
+                        United States{'\n'}
+                        (555) 123-4567
+                    </ThemedText>
+                </View>
+            </View>
+
+            {/* Payment Method */}
+            <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
+                <ThemedText className="text-lg font-bold mb-4">Payment Method</ThemedText>
+                <View className="rounded-lg flex-row items-center">
+                    <Icon name="CreditCard" size={24} />
+                    <View className="ml-4">
+                        <ThemedText className="font-bold">Visa ending in 4242</ThemedText>
+                        <ThemedText className="text-light-subtext dark:text-dark-subtext">Expires 12/25</ThemedText>
                     </View>
                 </View>
             </View>
-        </View>
 
-        {/* Shipping Address */}
-        <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
-            <ThemedText className="text-lg font-bold mb-4">Shipping Address</ThemedText>
-            <View className="">
-                <ThemedText className="font-bold">John Doe</ThemedText>
-                <ThemedText className="text-light-subtext dark:text-dark-subtext">
-                    123 Main Street{'\n'}
-                    Apt 4B{'\n'}
-                    San Francisco, CA 94105{'\n'}
-                    United States{'\n'}
-                    (555) 123-4567
-                </ThemedText>
-            </View>
-        </View>
-
-        {/* Payment Method */}
-        <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
-            <ThemedText className="text-lg font-bold mb-4">Payment Method</ThemedText>
-            <View className="rounded-lg flex-row items-center">
-                <Icon name="CreditCard" size={24} />
-                <View className="ml-4">
-                    <ThemedText className="font-bold">Visa ending in 4242</ThemedText>
-                    <ThemedText className="text-light-subtext dark:text-dark-subtext">Expires 12/25</ThemedText>
+            {/* Delivery */}
+            <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
+                <ThemedText className="text-lg font-bold mb-4">Estimated Delivery</ThemedText>
+                <View className="rounded-lg flex-row items-center">
+                    <Icon name="Truck" size={24} />
+                    <View className="ml-4">
+                        <ThemedText className="font-bold">Standard Shipping</ThemedText>
+                        <ThemedText className="text-light-subtext dark:text-dark-subtext">Dec 24 - Dec 26</ThemedText>
+                    </View>
                 </View>
             </View>
-        </View>
 
-        {/* Delivery */}
-        <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
-            <ThemedText className="text-lg font-bold mb-4">Estimated Delivery</ThemedText>
-            <View className="rounded-lg flex-row items-center">
-                <Icon name="Truck" size={24} />
-                <View className="ml-4">
-                    <ThemedText className="font-bold">Standard Shipping</ThemedText>
-                    <ThemedText className="text-light-subtext dark:text-dark-subtext">Dec 24 - Dec 26</ThemedText>
+            {/* Order Summary */}
+            <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
+                <ThemedText className="text-lg font-bold mb-4">Order Summary</ThemedText>
+                <View className=" rounded-lg">
+                    <View className="flex-row justify-between mb-2">
+                        <ThemedText>Subtotal</ThemedText>
+                        <ThemedText>$109.98</ThemedText>
+                    </View>
+                    <View className="flex-row justify-between mb-2">
+                        <ThemedText>Shipping</ThemedText>
+                        <ThemedText>$9.99</ThemedText>
+                    </View>
+                    <View className="flex-row justify-between mb-2">
+                        <ThemedText>Tax</ThemedText>
+                        <ThemedText>$10.99</ThemedText>
+                    </View>
+                    <View className="h-[1px] bg-light-border dark:bg-dark-border my-2" />
+                    <View className="flex-row justify-between">
+                        <ThemedText className="font-bold">Total</ThemedText>
+                        <ThemedText className="font-bold">$130.96</ThemedText>
+                    </View>
                 </View>
             </View>
-        </View>
-
-        {/* Order Summary */}
-        <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
-            <ThemedText className="text-lg font-bold mb-4">Order Summary</ThemedText>
-            <View className=" rounded-lg">
-                <View className="flex-row justify-between mb-2">
-                    <ThemedText>Subtotal</ThemedText>
-                    <ThemedText>$109.98</ThemedText>
-                </View>
-                <View className="flex-row justify-between mb-2">
-                    <ThemedText>Shipping</ThemedText>
-                    <ThemedText>$9.99</ThemedText>
-                </View>
-                <View className="flex-row justify-between mb-2">
-                    <ThemedText>Tax</ThemedText>
-                    <ThemedText>$10.99</ThemedText>
-                </View>
-                <View className="h-[1px] bg-light-border dark:bg-dark-border my-2" />
-                <View className="flex-row justify-between">
-                    <ThemedText className="font-bold">Total</ThemedText>
-                    <ThemedText className="font-bold">$130.96</ThemedText>
-                </View>
+            <View className='px-global' style={{ paddingBottom: insets.bottom }}>
+                <Button title="Place Order" className='mt-4' />
             </View>
-        </View>
-        <View className='px-global' style={{paddingBottom: insets.bottom}}>
-            <Button title="Place Order" className='mt-4' />
-        </View>
         </ScrollView>
     );
 };
@@ -575,13 +604,15 @@ const CheckoutScreen = () => {
                 showStepIndicator={true}
                 onStepChange={handleStepChange}
             >
+                
+                <Step title="Payment">
+                    <PaymentStep />
+                </Step>
                 <Step title="Shipping">
                     <ShippingStep />
                 </Step>
 
-                <Step title="Payment">
-                    <PaymentStep />
-                </Step>
+                
 
                 <Step title="Review">
                     <ReviewStep />
