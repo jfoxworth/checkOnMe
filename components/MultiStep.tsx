@@ -1,11 +1,10 @@
 import React, { ReactNode, useState, useRef, useEffect, Children, isValidElement, cloneElement } from 'react';
-import { View, Pressable, ScrollView, Animated, BackHandler, NativeEventSubscription } from 'react-native';
+import { View, Pressable, ScrollView, Animated } from 'react-native';
 import Header from '@/components/Header';
 import { Button } from '@/components/Button';
 import ThemedText from '@/components/ThemedText';
 import Icon from '@/components/Icon';
 import { router } from 'expo-router';
-import BackHandlerManager from '@/utils/BackHandlerManager';
 
 // Step component that will be used as children
 export interface StepProps {
@@ -78,9 +77,6 @@ export default function MultiStep({
   const isLastStep = currentStepIndex === steps.length - 1;
   const isFirstStep = currentStepIndex === 0;
   
-  // Store a reference to the handler ID for reliable cleanup
-  const handlerIdRef = useRef<string | null>(null);
-
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -114,69 +110,8 @@ export default function MultiStep({
     });
   }, [currentStepIndex]);
 
-  // Access the back handler manager
-  const backManager = BackHandlerManager.getInstance();
-
-  // Clean up function to ensure handlers are properly removed
-  const cleanupBackHandler = () => {
-    // Remove the handler if it exists
-    if (handlerIdRef.current) {
-      console.log(`MultiStep: Cleaning up back handler with ID: ${handlerIdRef.current}`);
-      backManager.unregisterHandler(handlerIdRef.current);
-      handlerIdRef.current = null;
-    }
-  };
-
-  // Add back button handler using our manager
-  useEffect(() => {
-    // Clean up any existing handler first
-    cleanupBackHandler();
-    
-    // Create a unique ID for this component instance
-    const handlerId = `multi-step-${Date.now()}`;
-    handlerIdRef.current = handlerId;
-
-    // This effect handles both hardware back button presses and ensures proper cleanup
-    const handleBackPress = () => {
-      if (!isFirstStep) {
-        handleBack();
-        return true; // Prevent default behavior
-      }
-      // If we're on first step and have onClose, use it
-      if (isFirstStep && onClose) {
-        onClose();
-        return true; // Prevent default behavior
-      }
-      return false; // Let the system handle it
-    };
-
-    // Register the handler with our manager
-    console.log(`MultiStep: Registering back handler with ID: ${handlerId}`);
-    backManager.registerHandler(handlerId, handleBackPress);
-    
-    // Make this the active handler
-    backManager.setActiveHandler(handlerId);
-
-    // Return cleanup function
-    return cleanupBackHandler;
-  }, [currentStepIndex, isFirstStep, onClose]);
-
-  // Add an extra cleanup effect that runs only on unmount
-  useEffect(() => {
-    return () => {
-      console.log('MultiStep: Component unmounting, performing final cleanup');
-      cleanupBackHandler();
-      
-      // For absolute safety, reset all handlers in the manager on unmount
-      // This helps when transitioning between screens
-      backManager.resetAll();
-    };
-  }, []);
-
   const handleNext = () => {
     if (isLastStep) {
-      // Make sure to clean up back handlers before completing
-      cleanupBackHandler();
       onComplete();
     } else {
       const nextStep = currentStepIndex + 1;
