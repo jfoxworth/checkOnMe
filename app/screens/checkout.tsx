@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Pressable, Image, TextInput, ScrollView, BackHandler, Alert, ImageSourcePropType, Modal, TouchableOpacity, AppState } from 'react-native';
+import { View, Text, Pressable, Image, TextInput, ScrollView, BackHandler, Alert, ImageSourcePropType, Modal, TouchableOpacity, AppState, ImageBackground } from 'react-native';
 import { Stack, router, Link, useRouter, useNavigation } from 'expo-router';
 import Header from '@/components/Header';
 import ThemedText from '@/components/ThemedText';
@@ -18,6 +18,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import BackHandlerManager from '@/utils/BackHandlerManager';
 import AnimatedView from '@/components/AnimatedView';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type CheckoutStep = 'shipping' | 'payment' | 'review' | 'success';
 
@@ -604,7 +605,7 @@ const CheckoutScreen = () => {
                 showStepIndicator={true}
                 onStepChange={handleStepChange}
             >
-                
+
                 <Step title="Payment">
                     <PaymentStep />
                 </Step>
@@ -612,10 +613,14 @@ const CheckoutScreen = () => {
                     <ShippingStep />
                 </Step>
 
-                
+
 
                 <Step title="Review">
                     <ReviewStep />
+                </Step>
+
+                <Step title="Success">
+                    <SuccessStep />
                 </Step>
             </MultiStep>
         </>
@@ -623,3 +628,62 @@ const CheckoutScreen = () => {
 };
 
 export default CheckoutScreen;
+
+const SuccessStep = () => {
+    return (
+        <View className='flex-1'>
+            <View className='w-full flex-row items-center justify-between mb-4 px-global'>
+                <View className='flex-1'>
+                    <ThemedText className='text-2xl font-bold'>Order placed</ThemedText>
+                    <ThemedText>Your order id is #1234567890</ThemedText>
+                </View>
+                <View className='flex-row items-center'>
+                    <AnimatedView animation="zoomInRotate" delay={200} duration={500} className='items-center border-2 border-light-primary dark:border-dark-primary rounded-xl' playOnlyOnce={true}>
+                        <Image source={require('@/assets/img/female-2.jpg')} className='h-24 w-16 -mr-4 -rotate-6 rounded-xl' />
+                    </AnimatedView>
+                    <AnimatedView animation="zoomInRotate" delay={100} duration={500} className='items-center border-2 border-light-primary dark:border-dark-primary rounded-xl' playOnlyOnce={true}>
+                        <Image source={require('@/assets/img/male-2.jpg')} className='h-28 w-20 rounded-xl' />
+                    </AnimatedView>
+                </View>
+            </View>
+            {/* Shipping Address */}
+            <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
+                <ThemedText className="text-lg font-bold mb-4">Shipping Address</ThemedText>
+                <View className="">
+                    <ThemedText className="font-bold">John Doe</ThemedText>
+                    <ThemedText className="text-light-subtext dark:text-dark-subtext">
+                        123 Main Street{'\n'}
+                        Apt 4B{'\n'}
+                        San Francisco, CA 94105{'\n'}
+                        United States{'\n'}
+                        (555) 123-4567
+                    </ThemedText>
+                </View>
+            </View>
+
+            {/* Payment Method */}
+            <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
+                <ThemedText className="text-lg font-bold mb-4">Payment Method</ThemedText>
+                <View className="rounded-lg flex-row items-center">
+                    <Icon name="CreditCard" size={24} />
+                    <View className="ml-4">
+                        <ThemedText className="font-bold">Visa ending in 4242</ThemedText>
+                        <ThemedText className="text-light-subtext dark:text-dark-subtext">Expires 12/25</ThemedText>
+                    </View>
+                </View>
+            </View>
+
+            {/* Delivery */}
+            <View className="px-global py-7 border-b-4 border-light-secondary dark:border-dark-darker">
+                <ThemedText className="text-lg font-bold mb-4">Estimated Delivery</ThemedText>
+                <View className="rounded-lg flex-row items-center">
+                    <Icon name="Truck" size={24} />
+                    <View className="ml-4">
+                        <ThemedText className="font-bold">Standard Shipping</ThemedText>
+                        <ThemedText className="text-light-subtext dark:text-dark-subtext">Dec 24 - Dec 26</ThemedText>
+                    </View>
+                </View>
+            </View>
+        </View>
+    );
+};

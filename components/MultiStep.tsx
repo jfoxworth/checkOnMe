@@ -95,7 +95,7 @@ export default function MultiStep({
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration:200,
+        duration:300,
         useNativeDriver: true,
       })
     ]).start();
@@ -176,7 +176,7 @@ export default function MultiStep({
             ),
             <Button
               key="next"
-              title={isLastStep ? 'Complete' : 'Next'}
+              title={isLastStep ? 'View' : 'Next'}
               onPress={handleNext}
               size="medium"
             />
@@ -213,7 +213,7 @@ export default function MultiStep({
         className="flex-1"
           style={{
             opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }]
+            transform: [{ translateX: slideAnim }]
           }}>
           {currentStep.component}
         </Animated.View>

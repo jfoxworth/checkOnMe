@@ -70,7 +70,7 @@ const ordersData: Order[] = [
       {
         id: 'prod1',
         name: 'Premium Cotton T-Shirt',
-        image: require('@/assets/img/male.jpg'),
+        image: require('@/assets/img/male-2.jpg'),
         price: '$29.99',
         quantity: 2,
         size: 'M',
