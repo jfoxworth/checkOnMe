@@ -12,11 +12,7 @@ export default function Layout() {
   const { openDrawer } = useDrawer();
   const insets = useSafeAreaInsets();
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0} // Adjust if needed
-    >
+    
 
       <Tabs>
         <TabSlot />
@@ -57,6 +53,5 @@ export default function Layout() {
           </TabTrigger>*/}
         </TabList>
       </Tabs>
-    </KeyboardAvoidingView>
   );
 }
