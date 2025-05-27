@@ -13,7 +13,7 @@ import { BlurView } from 'expo-blur';
 export default function CustomDrawerContent() {
     const insets = useSafeAreaInsets();
     return (
-        <BlurView style={{borderTopLeftRadius: 70, borderBottomLeftRadius: 70}} intensity={30} 
+        <BlurView style={{borderTopLeftRadius: Platform.OS === 'ios' ? 70 : 0, borderBottomLeftRadius: Platform.OS === 'ios' ? 70 : 0}} intensity={30} 
         tint='systemUltraThinMaterialLight'
         className={`flex-1 overflow-hidden bg-white/70 dark:bg-black/90 ${Platform.OS === 'ios' ? 'bg-white/70 dark:bg-black/90' : 'bg-white dark:bg-black'}`}>
         <ThemedScroller  style={{ paddingTop: insets.top + 30 }} className="py-6 px-10 bg-transparent  ">
