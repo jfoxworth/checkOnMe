@@ -20,7 +20,7 @@ export default function ProfileScreen() {
                                 <ThemedText className='text-sm text-light-subtext dark:text-dark-subtext'>johndoe@gmail.com</ThemedText>
                             </View>
                         </View>
-                        <Avatar src="https://mighty.tools/mockmind-api/content/human/5.jpg" size="lg" />
+                        <Avatar src={require('@/assets/img/thomino.jpg')} size="lg" />
                     </View>
                 </View>
 

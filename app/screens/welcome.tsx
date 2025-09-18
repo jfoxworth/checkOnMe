@@ -96,7 +96,7 @@ export default function OnboardingScreen() {
                     </Pressable>
                     <Pressable onPress={() => router.push('/(drawer)/(tabs)')} className='flex-1 relative bg-black dark:bg-white rounded-full flex flex-row items-center justify-center py-4'>
 
-                        <AntDesign name="apple1" size={22} color={colors.invert} />
+                        <AntDesign name="apple" size={22} color={colors.invert} />
                         <Text className='ml-3 text-white dark:text-black'>Apple ID</Text>
                     </Pressable>
                 </View>

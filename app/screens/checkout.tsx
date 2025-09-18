@@ -326,7 +326,7 @@ const PaymentStep = () => {
 
             <Selectable
                 title="Apple Pay"
-                customIcon={<AntDesign name="apple-o" size={24} color={colors.text} />}
+                customIcon={<AntDesign name="apple" size={24} color={colors.text} />}
                 description="Pay using Apple Pay"
                 selected={selectedPayment === 'apple'}
                 onPress={() => setSelectedPayment('apple')}

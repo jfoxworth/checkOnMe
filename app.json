@@ -6,9 +6,7 @@
     "version": "1.0.0",
     "runtimeVersion": "52.0.0",
     "scheme": "velora",
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
+    "platforms": ["ios", "android"],
     "experiments": {
       "tsconfigPaths": true
     },
@@ -35,7 +33,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "pan",
+      "predictiveBackGestureEnabled": false,
+      "config": {
+        "enableOnBackInvokedCallback": false
+      }
     },
     "extra": {
       "router": {
