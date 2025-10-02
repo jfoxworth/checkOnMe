@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Header from '@/components/Header';
@@ -7,76 +7,73 @@ import ThemedScroller from '@/components/ThemeScroller';
 import { Button } from '@/components/Button';
 import Icon from '@/components/Icon';
 import Selectable from '@/components/forms/Selectable';
+import { CheckInPlan } from '@/lib/types';
+import { planService, billingService } from '@/lib/api';
 
 type CheckoutStep = 'plan-review' | 'payment' | 'success';
-
-interface CheckInPlan {
-  id: string;
-  name: string;
-  checkIns: number;
-  price: number;
-  features: string[];
-}
-
-// Available check-in bundles - same as in cart.tsx
-const AVAILABLE_PLANS: CheckInPlan[] = [
-  {
-    id: 'starter',
-    name: 'Starter Bundle',
-    checkIns: 5,
-    price: 0,
-    features: [
-      '5 check-ins included',
-      'Basic emergency contacts',
-      'SMS notifications',
-      'Timeline tracking',
-    ],
-  },
-  {
-    id: 'value',
-    name: 'Value Bundle',
-    checkIns: 10,
-    price: 10,
-    features: [
-      '10 check-ins included',
-      'All starter features',
-      'Email notifications',
-      'Advanced timeline',
-      'Location sharing',
-      'Priority support',
-    ],
-  },
-  {
-    id: 'power',
-    name: 'Power Bundle',
-    checkIns: 25,
-    price: 20,
-    features: [
-      '25 check-ins included',
-      'All value features',
-      'Real-time GPS tracking',
-      'Custom intervals',
-      'Emergency escalation',
-      '24/7 support',
-    ],
-  },
-];
 
 const CheckoutScreen = () => {
   const { plan } = useLocalSearchParams();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('plan-review');
   const [selectedPayment, setSelectedPayment] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState<CheckInPlan | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Find the selected plan
-  const selectedPlan = AVAILABLE_PLANS.find((p) => p.id === plan);
+  // Mock user ID - in a real app, this would come from your auth context
+  const MOCK_USER_ID = 'user-john-doe';
 
-  if (!selectedPlan) {
+  // Load plan data
+  useEffect(() => {
+    loadPlanData();
+  }, [plan]);
+
+  const loadPlanData = async () => {
+    if (!plan || typeof plan !== 'string') {
+      setError('Plan not specified');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await planService.getPlanById(plan);
+
+      if (response.success && response.data) {
+        setSelectedPlan(response.data);
+      } else {
+        setError('Plan not found');
+      }
+    } catch (err) {
+      console.error('Error loading plan:', err);
+      setError('Failed to load plan details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
     return (
       <>
         <Header title="Checkout" />
         <View className="flex-1 items-center justify-center p-4">
-          <ThemedText className="text-center text-lg">
-            Plan not found. Please go back and select a plan.
+          <ThemedText className="text-lg">Loading plan details...</ThemedText>
+        </View>
+      </>
+    );
+  }
+
+  if (error || !selectedPlan) {
+    return (
+      <>
+        <Header title="Checkout" />
+        <View className="flex-1 items-center justify-center p-4">
+          <Icon name="AlertTriangle" size={48} className="mb-4 text-red-500" />
+          <ThemedText className="text-center text-lg font-semibold text-red-600 dark:text-red-400">
+            {error || 'Plan not found'}
+          </ThemedText>
+          <ThemedText className="mt-2 text-center text-gray-600 dark:text-gray-400">
+            Please go back and select a plan.
           </ThemedText>
           <Button title="Back to Plans" onPress={() => router.back()} className="mt-4" />
         </View>
@@ -92,7 +89,7 @@ const CheckoutScreen = () => {
     { id: 'google', type: 'google', label: 'Google Pay' },
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 'plan-review') {
       setCurrentStep('payment');
     } else if (currentStep === 'payment') {
@@ -100,7 +97,26 @@ const CheckoutScreen = () => {
         Alert.alert('Error', 'Please select a payment method');
         return;
       }
-      setCurrentStep('success');
+
+      // Process payment
+      try {
+        setLoading(true);
+        const purchaseResponse = await billingService.purchasePlan(MOCK_USER_ID, {
+          planId: selectedPlan.id,
+          paymentMethodId: selectedPayment,
+        });
+
+        if (purchaseResponse.success) {
+          setCurrentStep('success');
+        } else {
+          Alert.alert('Payment Failed', purchaseResponse.error || 'Payment could not be processed');
+        }
+      } catch (err) {
+        console.error('Payment error:', err);
+        Alert.alert('Payment Error', 'An unexpected error occurred during payment');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
