@@ -1,19 +1,16 @@
 {
   "expo": {
     "newArchEnabled": true,
-    "name": "Velora",
-    "slug": "velora",
+    "name": "CheckOnMe",
+    "slug": "checkonme",
     "version": "1.0.0",
     "runtimeVersion": "52.0.0",
-    "scheme": "velora",
+    "scheme": "checkonme",
     "platforms": ["ios", "android"],
     "experiments": {
       "tsconfigPaths": true
     },
-    "plugins": [
-      "expo-router",
-      "expo-font"
-    ],
+    "plugins": ["expo-router", "expo-font"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -22,9 +19,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true
     },

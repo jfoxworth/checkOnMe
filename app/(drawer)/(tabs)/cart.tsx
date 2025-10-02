@@ -13,142 +13,310 @@ import { Button } from '@/components/Button';
 import Section from '@/components/layout/Section';
 import AnimatedView from '@/components/AnimatedView';
 
-interface CartItem {
-    id: number;
-    name: string;
-    price: number;
-    image: any;
-    quantity: number;
+interface CheckInPlan {
+  id: string;
+  name: string;
+  checkIns: number;
+  price: number;
+  popular?: boolean;
+  features: string[];
+  description: string;
 }
 
+interface UserUsage {
+  checkInsUsed: number;
+  checkInsRemaining: number;
+  totalCheckIns: number;
+  isLoggedIn: boolean;
+}
 const CartScreen = () => {
-    const [cartItems, setCartItems] = useState<CartItem[]>([
-        { id: 1, name: 'Blue t-shirt', price: 29.99, image: require('@/assets/img/female-1.jpg'), quantity: 1 },
-        { id: 2, name: 'Orange t-shirt', price: 19.99, image: require('@/assets/img/female-2.jpg'), quantity: 1 },
-    ]);
-    const confirmationRef = useRef<ActionSheetRef>(null);
-    const [itemToRemove, setItemToRemove] = useState<number | null>(null);
+  // Mock user usage data - in a real app, this would come from your user store/context
+  const [userUsage] = useState<UserUsage>({
+    checkInsUsed: 3,
+    checkInsRemaining: 2,
+    totalCheckIns: 5,
+    isLoggedIn: true, // Change this to false to test logged out state
+  });
 
-    const shipping = 5.99;
-    const discount = 10; // 10% discount
+  // Available check-in bundles (pay-per-use model)
+  const [plans] = useState<CheckInPlan[]>([
+    {
+      id: 'starter',
+      name: 'Starter Bundle',
+      checkIns: 5,
+      price: 0,
+      description: 'Perfect for new users',
+      features: [
+        '5 check-ins included',
+        'Basic emergency contacts',
+        'SMS notifications',
+        'Timeline tracking',
+      ],
+    },
+    {
+      id: 'value',
+      name: 'Value Bundle',
+      checkIns: 10,
+      price: 10,
+      popular: true,
+      description: 'Best value for regular users',
+      features: [
+        '10 check-ins included',
+        'All starter features',
+        'Email notifications',
+        'Advanced timeline',
+        'Location sharing',
+        'Priority support',
+      ],
+    },
+    {
+      id: 'power',
+      name: 'Power Bundle',
+      checkIns: 25,
+      price: 20,
+      description: 'For frequent travelers',
+      features: [
+        '25 check-ins included',
+        'All value features',
+        'Real-time GPS tracking',
+        'Custom intervals',
+        'Emergency escalation',
+        '24/7 support',
+      ],
+    },
+  ]);
 
-    const updateQuantity = (id: number, newQuantity: number) => {
-        if (newQuantity < 1) return;
-        setCartItems(items =>
-            items.map(item =>
-                item.id === id ? { ...item, quantity: newQuantity } : item
-            )
-        );
-    };
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-    const handleRemoveItem = (id: number) => {
-        setItemToRemove(id);
-        confirmationRef.current?.show();
-    };
+  const handleSelectPlan = (planId: string) => {
+    setSelectedPlan(planId);
+  };
 
-    const confirmRemove = () => {
-        if (itemToRemove !== null) {
-            setCartItems(items => items.filter(item => item.id !== itemToRemove));
-            setItemToRemove(null);
-        }
-    };
+  const handlePurchase = () => {
+    if (!selectedPlan) {
+      return;
+    }
+    // Navigate to checkout with selected plan
+    router.push(`/screens/checkout?plan=${selectedPlan}`);
+  };
 
-    const cancelRemove = () => {
-        setItemToRemove(null);
-    };
+  const usagePercentage = userUsage.isLoggedIn
+    ? (userUsage.checkInsUsed / userUsage.totalCheckIns) * 100
+    : 0;
 
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const discountAmount = (subtotal * discount) / 100;
-    const total = subtotal - discountAmount + shipping;
+  return (
+    <>
+      <Header
+        title="Check-in Credits"
+        rightComponents={[
+          selectedPlan && plans.find((p) => p.id === selectedPlan)?.price !== 0 && (
+            <Button title="Purchase" onPress={handlePurchase} size="small" />
+          ),
+        ]}
+      />
 
-    return (
-        <>
-            <Header 
+      <ThemedScroller>
+        {/* Current Usage Section */}
+        <Section>
+          <View className="mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+            <ThemedText className="mb-3 text-lg font-bold">Your Check-in Credits</ThemedText>
 
-                title="Your cart"
-                rightComponents={[
-                    <Button title="Checkout"  href="/screens/checkout" />
-                ]}
-            />
+            {!userUsage.isLoggedIn ? (
+              // Not logged in state
+              <View>
+                <View className="mb-3 flex-row items-center">
+                  <Icon name="Gift" size={20} className="mr-2 text-green-500" />
+                  <ThemedText className="font-semibold text-green-600 dark:text-green-400">
+                    New accounts get 5 free check-ins!
+                  </ThemedText>
+                </View>
+                <View className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
+                  <ThemedText className="text-sm text-green-700 dark:text-green-300">
+                    Sign up or log in to claim your 5 free check-ins and start using our safety
+                    service.
+                  </ThemedText>
+                </View>
+                <View className="mt-4 flex-row gap-3">
+                  <Button
+                    title="Sign Up"
+                    className="flex-1"
+                    onPress={() => router.push('/screens/signup')}
+                  />
+                  <Button
+                    title="Log In"
+                    variant="outline"
+                    className="flex-1"
+                    onPress={() => router.push('/screens/login')}
+                  />
+                </View>
+              </View>
+            ) : (
+              // Logged in state
+              <View>
+                <View className="mb-3 flex-row items-center justify-between">
+                  <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                    Credits Available
+                  </ThemedText>
+                  <View className="flex-row items-center">
+                    <Icon name="Shield" size={16} className="mr-1" />
+                    <ThemedText className="text-sm font-medium">
+                      {userUsage.checkInsRemaining} remaining
+                    </ThemedText>
+                  </View>
+                </View>
 
-            <ThemedScroller>
-                
+                {/* Usage Progress Bar */}
+                <View className="mb-3">
+                  <View className="mb-1 flex-row justify-between">
+                    <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                      Used: {userUsage.checkInsUsed} of {userUsage.totalCheckIns}
+                    </ThemedText>
+                    <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                      {Math.round(usagePercentage)}%
+                    </ThemedText>
+                  </View>
+                  <View className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                    <View
+                      className="h-full rounded-full bg-blue-500"
+                      style={{ width: `${usagePercentage}%` }}
+                    />
+                  </View>
+                </View>
 
-                    {cartItems.map(item => (
-                        <View key={item.id} className="flex-row items-center border-b border-light-secondary dark:border-dark-secondary py-4">
-                            <Image
-                                source={item.image}
-                                className="w-20 h-28 rounded-lg bg-light-secondary dark:bg-dark-secondary"
-                            />
-                            <View className="flex-1 ml-6">
-                                <ThemedText className="font-bold">{item.name}</ThemedText>
-                                <ThemedText className="text-light-subtext dark:text-dark-subtext">
-                                    ${item.price.toFixed(2)}
-                                </ThemedText>
-                                <View className="flex-row items-center mt-2">
-                                    <Pressable
-                                        onPress={() => updateQuantity(item.id, item.quantity - 1)}
-                                        className="w-6 h-6 bg-light-secondary dark:bg-dark-secondary rounded-full items-center justify-center"
-                                    >
-                                        <Icon name="Minus" size={14} />
-                                    </Pressable>
-                                    <ThemedText className="mx-2">{item.quantity}</ThemedText>
-                                    <Pressable
-                                        onPress={() => updateQuantity(item.id, item.quantity + 1)}
-                                        className="w-6 h-6 bg-light-secondary dark:bg-dark-secondary rounded-full items-center justify-center"
-                                    >
-                                        <Icon name="Plus" size={12} />
-                                    </Pressable>
-                                    <Pressable
-                                        onPress={() => handleRemoveItem(item.id)}
-                                        className="ml-auto opacity-30"
-                                    >
-                                        <Icon name="Trash2" size={20} />
-                                    </Pressable>
-                                </View>
-                            </View>
-                        </View>
-                    ))}
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-1">
+                    <ThemedText className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {userUsage.checkInsRemaining}
+                    </ThemedText>
+                    <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                      Credits left
+                    </ThemedText>
+                  </View>
+                  <View className="flex-1 items-center">
+                    <ThemedText className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {userUsage.checkInsUsed}
+                    </ThemedText>
+                    <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                      Used
+                    </ThemedText>
+                  </View>
+                  <View className="flex-1 items-end">
+                    <ThemedText className="text-2xl font-bold">
+                      {userUsage.totalCheckIns}
+                    </ThemedText>
+                    <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                      Total owned
+                    </ThemedText>
+                  </View>
+                </View>
 
+                {userUsage.checkInsRemaining <= 2 && (
+                  <View className="mt-3 rounded-lg bg-orange-50 p-3 dark:bg-orange-900/20">
+                    <ThemedText className="text-sm text-orange-700 dark:text-orange-300">
+                      <Icon name="AlertTriangle" size={14} className="mr-1" />
+                      Running low on check-ins! Purchase more below to continue using our service.
+                    </ThemedText>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        </Section>
 
+        {/* Plans Section */}
+        <Section>
+          <ThemedText className="mb-4 text-xl font-bold">
+            {userUsage.isLoggedIn ? 'Buy More Check-ins' : 'Check-in Bundles'}
+          </ThemedText>
 
-                    <View className=" mt-4 pt-4">
-                        <View className="flex-row justify-between mb-2">
-                            <ThemedText className='text-base'>Subtotal</ThemedText>
-                            <ThemedText className='text-base'>${subtotal.toFixed(2)}</ThemedText>
-                        </View>
-                        <View className="flex-row justify-between mb-2">
-                            <ThemedText className='text-base'>Shipping</ThemedText>
-                            <ThemedText className='text-base'>${shipping.toFixed(2)}</ThemedText>
-                        </View>
-                        <View className="flex-row justify-between mb-2">
-                            <ThemedText className='text-base'>Discount ({discount}%)</ThemedText>
-                            <ThemedText className='text-base'>-${discountAmount.toFixed(2)}</ThemedText>
-                        </View>
-                        <View className="h-[1px] w-full bg-light-secondary dark:bg-dark-secondary mt-8 mb-4" />
-                        <View className="flex-row justify-between">
-                            <ThemedText className="font-bold text-lg">Total</ThemedText>
-                            <ThemedText className="font-bold text-lg">${total.toFixed(2)}</ThemedText>
-                        </View>
+          {plans.map((plan) => {
+            const isSelected = selectedPlan === plan.id;
+            const isFreePlan = plan.price === 0;
+
+            return (
+              <Pressable
+                key={plan.id}
+                onPress={() => handleSelectPlan(plan.id)}
+                className={`mb-4 rounded-lg border-2 p-4 ${
+                  isSelected
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
+                } ${isFreePlan && userUsage.isLoggedIn ? 'opacity-60' : ''}`}
+                disabled={isFreePlan && userUsage.isLoggedIn}>
+                {plan.popular && (
+                  <View className="absolute -top-2 left-4">
+                    <View className="rounded-full bg-blue-500 px-3 py-1">
+                      <ThemedText className="text-xs font-bold text-white">Best Value</ThemedText>
                     </View>
+                  </View>
+                )}
 
+                <View className="mb-3 flex-row items-center justify-between">
+                  <View>
+                    <ThemedText className="text-lg font-bold">{plan.name}</ThemedText>
+                    <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                      {plan.description}
+                    </ThemedText>
+                  </View>
+                  <View className="items-end">
+                    <ThemedText className="text-2xl font-bold">
+                      {plan.price === 0 ? 'FREE' : `$${plan.price}`}
+                    </ThemedText>
+                    <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                      {plan.checkIns} check-ins
+                    </ThemedText>
+                  </View>
+                </View>
 
+                <View className="space-y-2">
+                  {plan.features.map((feature, index) => (
+                    <View key={index} className="flex-row items-center">
+                      <Icon name="Check" size={16} className="mr-2 text-green-500" />
+                      <ThemedText className="text-sm text-gray-700 dark:text-gray-300">
+                        {feature}
+                      </ThemedText>
+                    </View>
+                  ))}
+                </View>
 
-            </ThemedScroller>
-          
+                {isFreePlan && userUsage.isLoggedIn && (
+                  <View className="mt-3 rounded bg-gray-100 p-2 dark:bg-gray-700">
+                    <ThemedText className="text-center text-sm text-gray-600 dark:text-gray-400">
+                      Free starter bundle already claimed
+                    </ThemedText>
+                  </View>
+                )}
 
-            <ConfirmationModal
-                actionSheetRef={confirmationRef}
-                title="Remove Item"
-                message="Are you sure you want to remove this item from your cart?"
-                onConfirm={confirmRemove}
-                onCancel={cancelRemove}
-                confirmText="Remove"
-                cancelText="Cancel"
-                isVisible
-            />
-        </>
-    );
+                {isSelected && !isFreePlan && (
+                  <View className="mt-3 flex-row items-center justify-center">
+                    <Icon name="CheckCircle" size={20} className="mr-2 text-blue-500" />
+                    <ThemedText className="font-medium text-blue-600 dark:text-blue-400">
+                      Selected
+                    </ThemedText>
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
+        </Section>
+
+        {/* Bottom spacing for floating button */}
+        <View className="h-20" />
+      </ThemedScroller>
+
+      {/* Floating Purchase Button */}
+      {selectedPlan && plans.find((p) => p.id === selectedPlan)?.price !== 0 && (
+        <View className="absolute bottom-0 left-0 right-0 border-t border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+          <Button
+            title={`Purchase ${plans.find((p) => p.id === selectedPlan)?.name} - $${plans.find((p) => p.id === selectedPlan)?.price}`}
+            onPress={handlePurchase}
+            size="large"
+            className="w-full"
+          />
+        </View>
+      )}
+    </>
+  );
 };
 
 export default CartScreen;

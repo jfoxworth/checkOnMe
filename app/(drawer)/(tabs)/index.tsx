@@ -18,183 +18,212 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const products = [
-    {
-        id: 1,
-        title: 'Premium Cotton T-Shirt',
-        description: 'High-quality cotton t-shirt with a comfortable fit. Perfect for everyday wear.',
-        price: '$29.99',
-        rating: 4.8,
-        image: require('@/assets/img/male.jpg'),
-        badge: 'New',
-    },
-    {
-        id: 2,
-        title: 'Classic Denim Jeans',
-        description: 'Classic fit denim jeans with premium quality fabric.',
-        price: '$59.99',
-        rating: 4.6,
-        image: require('@/assets/img/female-2.jpg'),
-        badge: 'Sale',
-    },
-    {
-        id: 3,
-        title: 'Leather Sneakers',
-        description: 'Stylish leather sneakers with cushioned sole.',
-        price: '$89.99',
-        rating: 4.9,
-        image: require('@/assets/img/female-1.jpg'),
-    },
-    {
-        id: 4,
-        title: 'Wool Sweater',
-        description: 'Warm and cozy wool sweater for cold days.',
-        price: '$79.99',
-        rating: 4.7,
-        image: require('@/assets/img/male-2.jpg'),
-    },
-
+  {
+    id: 1,
+    title: 'Premium Cotton T-Shirt',
+    description: 'High-quality cotton t-shirt with a comfortable fit. Perfect for everyday wear.',
+    price: '$29.99',
+    rating: 4.8,
+    image: require('@/assets/img/male.jpg'),
+    badge: 'New',
+  },
+  {
+    id: 2,
+    title: 'Classic Denim Jeans',
+    description: 'Classic fit denim jeans with premium quality fabric.',
+    price: '$59.99',
+    rating: 4.6,
+    image: require('@/assets/img/female-2.jpg'),
+    badge: 'Sale',
+  },
+  {
+    id: 3,
+    title: 'Leather Sneakers',
+    description: 'Stylish leather sneakers with cushioned sole.',
+    price: '$89.99',
+    rating: 4.9,
+    image: require('@/assets/img/female-1.jpg'),
+  },
+  {
+    id: 4,
+    title: 'Wool Sweater',
+    description: 'Warm and cozy wool sweater for cold days.',
+    price: '$79.99',
+    rating: 4.7,
+    image: require('@/assets/img/male-2.jpg'),
+  },
 ];
 
-
 export default function HomeScreen() {
-    const rightComponents = [
-        //<HeaderIcon hasBadge icon="MessageCircle" href="/screens/chat/list" />,
-        <HeaderIcon hasBadge icon="Bell" href="/screens/notifications" />,
-        <Avatar link="/screens/profile" size="xxs" className='mb-1 ml-1' src={require('@/assets/img/thomino.jpg')} />
-    ];
+  const rightComponents = [
+    //<HeaderIcon hasBadge icon="MessageCircle" href="/screens/chat/list" />,
+    <HeaderIcon hasBadge icon="Bell" href="/screens/notifications" />,
+    <Avatar
+      link="/screens/profile"
+      size="xxs"
+      className="mb-1 ml-1"
+      src={require('@/assets/img/thomino.jpg')}
+    />,
+  ];
 
-    return (
-        <>
+  return (
+    <>
+      <Header
+        variant="blurred"
+        leftComponent={
+          <ThemedText className="font-outfit-bold text-2xl">
+            Check on me<Text className="text-teal-300">.</Text>
+          </ThemedText>
+        }
+        rightComponents={rightComponents}
+        //variant='transparent'
+      />
 
-            <Header
-                variant='blurred'
-                leftComponent={<ThemedText className='text-2xl font-outfit-bold'>Velora<Text className='text-teal-300'>.</Text>  </ThemedText>}
-                rightComponents={rightComponents}
-            //variant='transparent'
-            />
-
-            <ThemeScroller
-                scrollEventThrottle={16}
-                className='p-0'
-                style={{ paddingTop: 100 }}
-            >
-                <View className='flex-1'>
-                    <CustomCard
-                        backgroundImage={require('@/assets/img/banner-2.jpg')}
-                        className='w-full'
-                        rounded='none'
-                        overlayOpacity={0}
-                        href="/screens/products"
-                    >
-                        <View className="p-6 w-full h-[350px] flex flex-col justify-end">
-                            <View className="flex-row items-center justify-between">
-                                <View>
-                                    <Text className="text-white text-2xl font-bold">Summer 2025</Text>
-                                    <Text className="text-white text-xs mb-3">New collection just arrived</Text>
-                                </View>
-                            </View>
-                            <View className='flex-row items-center justify-start bg-white rounded-full mr-auto py-1 px-4 mt-2'>
-                                <Text className="text-sm text-black">
-                                    View all
-                                </Text>
-                            </View>
-
-                        </View>
-                    </CustomCard>
-
-                    <CardScroller space={0} className='mt-0'>
-                        <FeaturedProduct
-                            title="Night dress"
-                            price="$29.99"
-                            image={require('@/assets/img/female-1.jpg')}
-                        />
-                        <FeaturedProduct
-                            title="Summer jacket"
-                            price="$29.99"
-                            image={require('@/assets/img/female-2.jpg')}
-                        />
-                        <FeaturedProduct
-                            title="Casual jacket"
-                            price="$29.99"
-                            image={require('@/assets/img/male-2.jpg')}
-                        />
-
-                    </CardScroller>
-
-
-                    <CardScroller className='mt-3 px-global' space={6}>
-                        <Chip onPress={() => router.push('/screens/products')} label="Women" />
-                        <Chip onPress={() => router.push('/screens/products')} label="Men" />
-                        <Chip onPress={() => router.push('/screens/products')} label="Kids" />
-                        <Chip onPress={() => router.push('/screens/products')} label="Accessories" />
-                        <Chip onPress={() => router.push('/screens/products')} label="Jewelry" />
-                        <Chip onPress={() => router.push('/screens/products')} label="Sale" />
-                    </CardScroller>
-
-                    <Section
-                        //title="All Products"
-                        className='mt-4 px-2'
-                        titleSize='lg'
-                    //padding="md"
-                    >
-                        <Grid className='mt-2' columns={2} spacing={5} >
-                            {products.map((product) => (
-                                <Card
-                                    imageHeight={250}
-                                    key={product.id}
-                                    rounded='none'
-                                    title={product.title}
-                                    //description={product.description}
-                                    image={product.image}
-                                    price={product.price}
-                                    //rating={product.rating}
-                                    badge={product.badge}
-                                    //badgeColor={product.badgeColor}
-                                    href={`/screens/product-detail?id=${product.id}`}
-                                //variant='overlay'
-                                />
-                            ))}
-                        </Grid>
-                    </Section>
-
+      <ThemeScroller scrollEventThrottle={16} className="p-0" style={{ paddingTop: 100 }}>
+        <View className="flex-1">
+          <CustomCard
+            backgroundImage={require('@/assets/img/introBackground1.jpg')}
+            className="w-full"
+            rounded="none"
+            overlayOpacity={0.2}>
+            <View className="mt-8 flex h-[350px] w-full flex-col p-6">
+              <View className="w-3/4 flex-row items-center justify-between">
+                <View>
+                  <Text className="mb-5 text-2xl font-bold text-white">Check On Me</Text>
+                  <Text className="text-xl text-white">
+                    We discretely check on you and notify the people you want contacted if you miss
+                    the check in.
+                  </Text>
                 </View>
-                <View className='h-[50px]' />
-            </ThemeScroller>
-        </>
-    );
-}
+              </View>
+            </View>
+          </CustomCard>
 
+          <Section
+            titleSize="3xl"
+            className="mt-8 bg-gray-50 pb-10 pl-5 dark:bg-neutral-900"
+            title="Use cases"
+            subtitle="Hiking trips, first dates, road trips, and more"
+          />
+
+          <CustomCard
+            backgroundImage={require('@/assets/img/hikingBackground1.jpg')}
+            className="w-full"
+            rounded="none"
+            overlayOpacity={0.5}>
+            <View className="mb-5 mt-3 flex h-[350px] w-full flex-col p-6">
+              <View className="w-3/4 flex-row items-center justify-between">
+                <View>
+                  <Text className="mb-5 text-2xl font-bold text-white">Hiking Trips</Text>
+                  <Text className="text-xl text-white">
+                    Tell us where you're going, who you're going with, and who you want contacted
+                    with that info. Schedule a check in for when you expect to be back. If you don't
+                    respond to the check in, we send out the notification with your info.
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </CustomCard>
+
+          <Section
+            titleSize="3xl"
+            className="mt-8 bg-gray-50 pb-10 pl-5 dark:bg-neutral-900"
+            title="How it works">
+            <Text className="my-3 mr-3 text-lg">
+              You create and schedule a check in. You set notifications to go out to emails or phone
+              numbers. At the time you schedule, the app will prompt you to enter the 4 digit code
+              you set up. If you don't respond, the app will send out an email or text with the info
+              you filled out. If you respond, nothing happens."
+            </Text>
+          </Section>
+
+          <CustomCard
+            backgroundImage={require('@/assets/img/datingBackground1.jpg')}
+            className="w-full"
+            rounded="none"
+            overlayOpacity={0.5}>
+            <View className="mb-5 mt-3 flex h-[350px] w-full flex-col p-6">
+              <View className="w-full flex-row items-center justify-between">
+                <View>
+                  <Text className="mb-5 text-2xl font-bold text-white">First Dates</Text>
+                  <Text className="text-xl text-white">
+                    Record who you're meeting, where, and when. Schedule a check in for after your
+                    date. If you don't respond to the check in, we send out the notification with
+                    your info.
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </CustomCard>
+
+          <Section
+            titleSize="3xl"
+            className="mt-8 bg-gray-50 pb-10 pl-5 dark:bg-neutral-900"
+            title="Both Secure and Private">
+            <Text className="my-3 mr-3 text-lg">
+              If you check in, no notifications are sent out. There is no need for your family and
+              friends to know your plans and no need to rely on someone to check on you.
+            </Text>
+          </Section>
+
+          <CustomCard
+            backgroundImage={require('@/assets/img/roadTripBackground1.jpg')}
+            className="w-full"
+            rounded="none"
+            overlayOpacity={0.5}>
+            <View className="mb-5 mt-3 flex h-[350px] w-full flex-col p-6">
+              <View className="w-full flex-row items-center justify-end">
+                <View className="w-3/4 items-end">
+                  <Text className="mb-5 text-2xl font-bold text-white">Road Trips</Text>
+                  <Text className="text-xl text-white">
+                    Record where you're going, who you're going with, and your route. If something
+                    happens, we'll alert the people you want contacted with your info.
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </CustomCard>
+
+          <Section titleSize="2xl" className="0 mt-8 pb-10 pl-5 pr-5" title="Ready to get started?">
+            <Text className="my-3 mr-3 text-lg text-gray-700 dark:text-gray-300">
+              Set up your first check-in and stay safe on your next adventure.
+            </Text>
+            <Button
+              title="Create Check-In"
+              className="mt-4 px-8 py-3"
+              onPress={() => router.push('/checkins')}
+            />
+          </Section>
+        </View>
+      </ThemeScroller>
+    </>
+  );
+}
 
 const CategorySelect = (props: any) => {
-    return (
-        <Pressable className='flex-col flex items-center justify-center'>
-            <View className='w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center'>
-                <Icon name={props.icon} strokeWidth={1.4} size={24} />
-            </View>
-            <ThemedText className="text-xs">{props.title}</ThemedText>
-        </Pressable>
-    )
-}
-
+  return (
+    <Pressable className="flex flex-col items-center justify-center">
+      <View className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+        <Icon name={props.icon} strokeWidth={1.4} size={24} />
+      </View>
+      <ThemedText className="text-xs">{props.title}</ThemedText>
+    </Pressable>
+  );
+};
 
 const FeaturedProduct = (props: any) => {
-    return (
-        <Link href="/screens/product-detail" asChild>
-            <Pressable className='w-[300px] h-[400px]'>
-                <ImageBackground
-                    source={props.image}
-                    className='w-full h-full'>
-                    <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.3)']}
-                        className='w-full h-full'
-                    >
-                        <View className='flex-1 items-start justify-end p-4'>
-                            <Text className='text-white text-base font-bold'>{props.title}</Text>
-                            <Text className='text-white text-xs mb-3'>{props.price}</Text>
-                        </View>
-                    </LinearGradient>
-                </ImageBackground>
-            </Pressable>
-        </Link>
-    )
-}
+  return (
+    <Link href="/screens/product-detail" asChild>
+      <Pressable className="h-[400px] w-[300px]">
+        <ImageBackground source={props.image} className="h-full w-full">
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.3)']} className="h-full w-full">
+            <View className="flex-1 items-start justify-end p-4">
+              <Text className="text-base font-bold text-white">{props.title}</Text>
+              <Text className="mb-3 text-xs text-white">{props.price}</Text>
+            </View>
+          </LinearGradient>
+        </ImageBackground>
+      </Pressable>
+    </Link>
+  );
+};

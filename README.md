@@ -1,4 +1,4 @@
-# Velora - Ecommerce Template
+# Check on me - Security App
 
 Thank you for buying this template!
 
@@ -7,7 +7,7 @@ Thank you for buying this template!
 - Built with Expo, React Native & Nativewind
 - Dark/light mode
 - Fully customizable components
-- TypeScript 
+- TypeScript
 
 ## Getting Started
 
@@ -24,4 +24,3 @@ npm install --legacy-peer-deps
 # Start the Expo development server with a clean cache
 npx expo start -c
 ```
-
