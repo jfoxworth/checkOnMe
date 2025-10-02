@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { NativeWindStyleSheet } from 'nativewind';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { UserDataProvider, useUserData } from './contexts/UserDataContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import useThemedNavigation from './hooks/useThemedNavigation';
 import { Platform } from 'react-native';
@@ -14,11 +15,21 @@ NativeWindStyleSheet.setOutput({
 
 function ThemedLayout() {
   const { ThemedStatusBar, screenOptions } = useThemedNavigation();
+  const { initializeUserData } = useUserData();
 
   // Initialize app data and configuration
   useEffect(() => {
-    initializeApp().catch(console.error);
-  }, []);
+    const initialize = async () => {
+      await initializeApp();
+      
+      // Initialize with sample user after app setup
+      // In a real app, you'd get this from login/auth
+      const sampleUserId = 'sample-user-123';
+      await initializeUserData(sampleUserId);
+    };
+    
+    initialize().catch(console.error);
+  }, [initializeUserData]);
 
   return (
     <>
@@ -36,7 +47,9 @@ export default function RootLayout() {
       className={`bg-light-primary dark:bg-dark-primary ${Platform.OS === 'ios' ? 'pb-0 ' : ''}`}
       style={{ flex: 1 }}>
       <ThemeProvider>
-        <ThemedLayout />
+        <UserDataProvider>
+          <ThemedLayout />
+        </UserDataProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

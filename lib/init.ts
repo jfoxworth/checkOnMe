@@ -30,8 +30,8 @@ export const testDynamoDBConnection = async (): Promise<boolean> => {
   try {
     console.log('Testing DynamoDB connection...');
 
-    const { planService } = await import('./api');
-    const response = await planService.getAllPlans();
+    const { purchaseService } = await import('./api');
+    const response = await purchaseService.getCheckInPurchaseOptions();
 
     if (response.success) {
       console.log('✅ DynamoDB connection successful');

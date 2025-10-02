@@ -2,13 +2,13 @@ import { CheckInPlan, User } from './types';
 import { api } from './api';
 import { createKeys, dynamoService, TABLE_NAMES } from './dynamodb';
 
-// Default plans that should be available in the app - Updated for single table
-export const DEFAULT_PLANS: Omit<CheckInPlan, 'id' | 'PK' | 'SK'>[] = [
+// Default check-in purchase options - Individual purchases, not recurring subscriptions
+export const DEFAULT_PURCHASE_OPTIONS: Omit<CheckInPlan, 'id' | 'PK' | 'SK'>[] = [
   {
-    name: 'Starter Bundle',
-    description: 'Perfect for new users to try out our safety check-in system',
+    name: 'Starter Pack',
+    description: 'Perfect for new users to try our safety check-in system',
     checkIns: 5,
-    price: 0,
+    price: 0, // Free starter credits
     features: [
       '5 check-ins included',
       'Basic emergency contacts',
@@ -19,10 +19,10 @@ export const DEFAULT_PLANS: Omit<CheckInPlan, 'id' | 'PK' | 'SK'>[] = [
     sortOrder: 1,
   },
   {
-    name: 'Value Bundle',
-    description: 'Great value for regular users who check in occasionally',
+    name: 'Value Pack',
+    description: 'Great value for occasional check-in needs',
     checkIns: 10,
-    price: 10,
+    price: 5, // $0.50 per check-in
     features: [
       '10 check-ins included',
       'All starter features',
@@ -36,10 +36,10 @@ export const DEFAULT_PLANS: Omit<CheckInPlan, 'id' | 'PK' | 'SK'>[] = [
     popular: true, // Mark as popular
   },
   {
-    name: 'Power Bundle',
-    description: 'Best value for frequent users and heavy check-in activity',
+    name: 'Power Pack',
+    description: 'Best value for frequent check-in activity',
     checkIns: 25,
-    price: 20,
+    price: 10, // $0.40 per check-in
     features: [
       '25 check-ins included',
       'All value features',
@@ -53,37 +53,39 @@ export const DEFAULT_PLANS: Omit<CheckInPlan, 'id' | 'PK' | 'SK'>[] = [
   },
 ];
 
-// Utility to seed plans data
-export const seedPlans = async (): Promise<void> => {
-  console.log('Seeding default plans...');
+// Utility to seed check-in purchase options data
+export const seedPurchaseOptions = async (): Promise<void> => {
+  console.log('Seeding check-in purchase options...');
 
   try {
-    // Check if plans already exist
-    const existingPlans = await api.getAllPlans();
-    
-    if (existingPlans.success && existingPlans.data && existingPlans.data.length > 0) {
-      console.log('Plans already exist, skipping seed');
+    // Check if purchase options already exist
+    const existingOptions = await api.getCheckInPurchaseOptions();
+
+    if (existingOptions.success && existingOptions.data && existingOptions.data.length > 0) {
+      console.log('Purchase options already exist, skipping seed');
       return;
     }
-    
-    // Create default plans with single-table keys
-    for (const planData of DEFAULT_PLANS) {
-      const planId = `plan-${planData.name.toLowerCase().replace(/\s+/g, '-')}`;
-      const plan: CheckInPlan = {
-        ...planData,
-        ...createKeys.plan(planId),
-        id: planId,
+
+    // Create default purchase options with single-table keys
+    for (const optionData of DEFAULT_PURCHASE_OPTIONS) {
+      const optionId = `option-${optionData.name.toLowerCase().replace(/\s+/g, '-')}`;
+      const option: CheckInPlan = {
+        ...optionData,
+        ...createKeys.plan(optionId),
+        id: optionId,
       };
-      
+
       // Use the DynamoDB service directly since we need to create with specific IDs
-      await dynamoService.putItem(TABLE_NAMES.MAIN, plan);
-      
-      console.log(`Created plan: ${plan.name}`);
+      await dynamoService.putItem(TABLE_NAMES.MAIN, option);
+
+      console.log(
+        `Created purchase option: ${option.name} (${option.checkIns} check-ins for $${option.price})`
+      );
     }
-    
-    console.log('Plans seeded successfully!');
+
+    console.log('Purchase options seeded successfully!');
   } catch (error) {
-    console.error('Error seeding plans:', error);
+    console.error('Error seeding purchase options:', error);
   }
 };
 
@@ -132,7 +134,7 @@ export const runSeedOperations = async (): Promise<void> => {
   console.log('Running seed operations...');
 
   try {
-    await seedPlans();
+    await seedPurchaseOptions();
     await createSampleUser();
     console.log('All seed operations completed!');
   } catch (error) {

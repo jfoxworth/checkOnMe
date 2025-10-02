@@ -8,7 +8,7 @@ import { Button } from '@/components/Button';
 import Icon from '@/components/Icon';
 import Selectable from '@/components/forms/Selectable';
 import { CheckInPlan } from '@/lib/types';
-import { planService, billingService } from '@/lib/api';
+import { purchaseService, billingService } from '@/lib/api';
 
 type CheckoutStep = 'plan-review' | 'payment' | 'success';
 
@@ -37,7 +37,7 @@ const CheckoutScreen = () => {
 
     try {
       setLoading(true);
-      const response = await planService.getPlanById(plan);
+      const response = await purchaseService.getPurchaseOptionById(plan);
 
       if (response.success && response.data) {
         setSelectedPlan(response.data);
@@ -101,8 +101,8 @@ const CheckoutScreen = () => {
       // Process payment
       try {
         setLoading(true);
-        const purchaseResponse = await billingService.purchasePlan(MOCK_USER_ID, {
-          planId: selectedPlan.id,
+        const purchaseResponse = await billingService.purchaseCheckInCredits(MOCK_USER_ID, {
+          purchaseId: selectedPlan.id,
           paymentMethodId: selectedPayment,
         });
 

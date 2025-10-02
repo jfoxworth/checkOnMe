@@ -1,7 +1,7 @@
-import { 
-  User, 
-  CheckInPlan, 
-  UserUsage, 
+import {
+  User,
+  CheckInPlan,
+  UserUsage,
   ApiResponse,
   CheckIn,
   Contact,
@@ -20,11 +20,11 @@ export const api = {
   async getUserById(userId: string): Promise<ApiResponse<User>> {
     try {
       const user = await dynamoService.getItem<User>(TABLE_NAMES.MAIN, createKeys.user(userId));
-      
+
       if (!user) {
         return { success: false, error: 'User not found' };
       }
-      
+
       return { success: true, data: user };
     } catch (error) {
       console.error('Get user error:', error);
@@ -38,7 +38,7 @@ export const api = {
       if (!userResponse.success || !userResponse.data) {
         return { success: false, error: 'User not found' };
       }
-      
+
       const user = userResponse.data;
       const usage: UserUsage = {
         userId,
@@ -49,7 +49,7 @@ export const api = {
         totalCheckIns: user.totalCredits,
         isLoggedIn: true,
       };
-      
+
       return { success: true, data: usage };
     } catch (error) {
       console.error('Get user usage error:', error);
@@ -57,48 +57,54 @@ export const api = {
     }
   },
 
-  // Plan operations
-  async getAllPlans(): Promise<ApiResponse<CheckInPlan[]>> {
+  // Check-in purchase options - Individual purchases, not subscriptions
+  async getCheckInPurchaseOptions(): Promise<ApiResponse<CheckInPlan[]>> {
     try {
-      const plans = await dynamoService.scanItems<CheckInPlan>(
+      const purchaseOptions = await dynamoService.scanItems<CheckInPlan>(
         TABLE_NAMES.MAIN,
         'begins_with(PK, :pk) AND SK = :sk AND #isActive = :isActive',
         { ':pk': 'PLAN#', ':sk': 'DETAILS', ':isActive': true },
         { '#isActive': 'isActive' }
       );
-      
-      // Sort by sortOrder
-      plans.sort((a, b) => a.sortOrder - b.sortOrder);
-      
-      return { success: true, data: plans };
+
+      // Sort by sortOrder (price/value)
+      purchaseOptions.sort((a, b) => a.sortOrder - b.sortOrder);
+
+      return { success: true, data: purchaseOptions };
     } catch (error) {
-      console.error('Get plans error:', error);
-      return { success: false, error: 'Failed to get plans' };
+      console.error('Get purchase options error:', error);
+      return { success: false, error: 'Failed to get purchase options' };
     }
   },
 
-  async getPlanById(planId: string): Promise<ApiResponse<CheckInPlan>> {
+  async getPurchaseOptionById(purchaseId: string): Promise<ApiResponse<CheckInPlan>> {
     try {
-      const plan = await dynamoService.getItem<CheckInPlan>(TABLE_NAMES.MAIN, createKeys.plan(planId));
-      
-      if (!plan) {
-        return { success: false, error: 'Plan not found' };
+      const purchaseOption = await dynamoService.getItem<CheckInPlan>(
+        TABLE_NAMES.MAIN,
+        createKeys.plan(purchaseId)
+      );
+
+      if (!purchaseOption) {
+        return { success: false, error: 'Purchase option not found' };
       }
-      
-      return { success: true, data: plan };
+
+      return { success: true, data: purchaseOption };
     } catch (error) {
-      console.error('Get plan error:', error);
-      return { success: false, error: 'Failed to get plan' };
+      console.error('Get purchase option error:', error);
+      return { success: false, error: 'Failed to get purchase option' };
     }
   },
 
   // Check-in operations - New single-table implementation
-  async createCheckIn(userId: string, data: {
-    scheduledTime: string;
-    intervalMinutes: number;
-    contacts: string[];
-    location?: { latitude: number; longitude: number };
-  }): Promise<ApiResponse<CheckIn>> {
+  async createCheckIn(
+    userId: string,
+    data: {
+      scheduledTime: string;
+      intervalMinutes: number;
+      contacts: string[];
+      location?: { latitude: number; longitude: number };
+    }
+  ): Promise<ApiResponse<CheckIn>> {
     try {
       // Check if user has available credits
       const userResponse = await this.getUserById(userId);
@@ -114,9 +120,9 @@ export const api = {
       // Create check-in
       const checkInId = generateId();
       const responseDeadline = new Date(
-        new Date(data.scheduledTime).getTime() + (data.intervalMinutes * 60 * 1000)
+        new Date(data.scheduledTime).getTime() + data.intervalMinutes * 60 * 1000
       ).toISOString();
-      
+
       const checkIn: CheckIn = {
         ...createKeys.checkIn(userId, checkInId),
         id: checkInId,
@@ -151,11 +157,15 @@ export const api = {
     }
   },
 
-  async acknowledgeCheckIn(userId: string, checkInId: string, confirmationCode: string): Promise<ApiResponse<CheckIn>> {
+  async acknowledgeCheckIn(
+    userId: string,
+    checkInId: string,
+    confirmationCode: string
+  ): Promise<ApiResponse<CheckIn>> {
     try {
       // Get check-in
       const checkIn = await dynamoService.getItem<CheckIn>(
-        TABLE_NAMES.MAIN, 
+        TABLE_NAMES.MAIN,
         createKeys.checkIn(userId, checkInId)
       );
 
@@ -197,7 +207,9 @@ export const api = {
       );
 
       // Sort by scheduled time, most recent first
-      checkIns.sort((a, b) => new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime());
+      checkIns.sort(
+        (a, b) => new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime()
+      );
 
       return { success: true, data: checkIns };
     } catch (error) {
@@ -218,7 +230,7 @@ export const api = {
         { '#status': 'status' }
       );
 
-      const escalationQueries: EscalationQuery[] = items.map(checkIn => ({
+      const escalationQueries: EscalationQuery[] = items.map((checkIn) => ({
         userId: checkIn.userId,
         checkInId: checkIn.id,
         scheduledTime: checkIn.scheduledTime,
@@ -238,7 +250,7 @@ export const api = {
     try {
       // Get check-in
       const checkIn = await dynamoService.getItem<CheckIn>(
-        TABLE_NAMES.MAIN, 
+        TABLE_NAMES.MAIN,
         createKeys.checkIn(userId, checkInId)
       );
 
@@ -279,7 +291,10 @@ export const api = {
     }
   },
 
-  async createContact(userId: string, contactData: Omit<Contact, 'PK' | 'SK' | 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Contact>> {
+  async createContact(
+    userId: string,
+    contactData: Omit<Contact, 'PK' | 'SK' | 'id' | 'userId' | 'createdAt' | 'updatedAt'>
+  ): Promise<ApiResponse<Contact>> {
     try {
       const contactId = generateId();
       const contact: Contact = {
@@ -303,20 +318,28 @@ export const api = {
 
 // For backward compatibility, export individual services
 export const userService = api;
-export const planService = api;
+export const purchaseService = api; // Changed from planService to purchaseService
 export const billingService = {
-  async purchasePlan(userId: string, purchaseData: { planId: string; paymentMethodId: string }): Promise<ApiResponse<{ id: string; status: string }>> {
+  async purchaseCheckInCredits(
+    userId: string,
+    purchaseData: { purchaseId: string; paymentMethodId: string }
+  ): Promise<ApiResponse<{ id: string; status: string }>> {
     try {
-      // Simplified purchase - just simulate success
-      return { 
-        success: true, 
-        data: { id: generateId(), status: 'completed' } 
+      // In a real implementation, this would:
+      // 1. Process payment via Stripe/payment processor
+      // 2. Add credits to user account
+      // 3. Create transaction record
+      // 4. Return transaction details
+
+      return {
+        success: true,
+        data: { id: generateId(), status: 'completed' },
       };
     } catch (error) {
-      return { 
-        success: false, 
-        error: 'Failed to process payment' 
+      return {
+        success: false,
+        error: 'Failed to process payment',
       };
     }
-  }
+  },
 };

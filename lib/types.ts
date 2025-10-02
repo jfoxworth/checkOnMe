@@ -30,7 +30,7 @@ export interface CheckIn {
   description?: string;
   status: 'scheduled' | 'active' | 'acknowledged' | 'escalated' | 'missed' | 'cancelled';
   type?: 'hiking' | 'date' | 'road-trip' | 'solo-activity' | 'work' | 'other';
-  
+
   // Timing - Critical for the alarm workflow
   scheduledTime: string; // ISO string - when the activity starts
   responseDeadline: string; // ISO string - when user must check in
@@ -39,7 +39,7 @@ export interface CheckIn {
   escalatedAt?: string; // ISO string - when emergency contacts were notified
   createdAt: string;
   updatedAt: string;
-  
+
   // Location
   location?: {
     latitude: number;
@@ -56,26 +56,27 @@ export interface CheckIn {
     address?: string;
     timestamp: string;
   };
-  
+
   // Emergency escalation
   contacts: string[]; // Array of contact IDs for simplified API
   escalationContacts?: string[]; // Array of contact PKs
   escalationLevel?: number; // 0 = none, 1 = first reminder, 2 = emergency contacts, etc.
-  
+
   // User confirmation code
   confirmationCode: string; // 4-digit code for user to enter
-  
+
   // Settings
   checkInInterval?: number; // minutes
   gracePeriod?: number; // minutes after responseDeadline before escalation
   autoCancel?: boolean;
-  
+
   // Metadata
   deviceInfo?: {
     platform: string;
     version: string;
   };
-}export interface EmergencyContact {
+}
+export interface EmergencyContact {
   // DynamoDB Keys: PK = USER#{userId}, SK = CONTACT#{contactId}
   PK: string; // USER#{userId}
   SK: string; // CONTACT#{contactId}
@@ -90,7 +91,7 @@ export interface CheckIn {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  
+
   // Contact preferences
   notificationMethods: ('sms' | 'email' | 'call')[];
   timeZone?: string;
@@ -114,6 +115,9 @@ export interface CheckInPlan {
   popular?: boolean; // for highlighting popular plans
 }
 
+// Type alias for purchase options - same structure but clearer naming
+export type CheckInPurchaseOption = CheckInPlan;
+
 export interface PurchaseTransaction {
   // DynamoDB Keys: PK = USER#{userId}, SK = TRANSACTION#{transactionId}
   PK: string; // USER#{userId}
@@ -127,7 +131,7 @@ export interface PurchaseTransaction {
   paymentMethod: string;
   transactionDate: string;
   creditsAdded: number;
-  
+
   // Payment gateway info
   paymentIntentId?: string;
   receiptUrl?: string;

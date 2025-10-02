@@ -189,10 +189,19 @@ export const dynamoService = new DynamoDBService();
 // Single-table design key utilities
 export const createKeys = {
   user: (userId: string) => ({ PK: `USER#${userId}`, SK: 'PROFILE' }),
-  checkIn: (userId: string, checkInId: string) => ({ PK: `USER#${userId}`, SK: `CHECKIN#${checkInId}` }),
-  contact: (userId: string, contactId: string) => ({ PK: `USER#${userId}`, SK: `CONTACT#${contactId}` }),
+  checkIn: (userId: string, checkInId: string) => ({
+    PK: `USER#${userId}`,
+    SK: `CHECKIN#${checkInId}`,
+  }),
+  contact: (userId: string, contactId: string) => ({
+    PK: `USER#${userId}`,
+    SK: `CONTACT#${contactId}`,
+  }),
   plan: (planId: string) => ({ PK: `PLAN#${planId}`, SK: 'DETAILS' }),
-  transaction: (userId: string, transactionId: string) => ({ PK: `USER#${userId}`, SK: `TRANSACTION#${transactionId}` }),
+  transaction: (userId: string, transactionId: string) => ({
+    PK: `USER#${userId}`,
+    SK: `TRANSACTION#${transactionId}`,
+  }),
 };
 
 // Query patterns for single table
@@ -202,58 +211,58 @@ export const queryPatterns = {
     KeyConditionExpression: 'PK = :pk AND SK = :sk',
     ExpressionAttributeValues: {
       ':pk': `USER#${userId}`,
-      ':sk': 'PROFILE'
-    }
+      ':sk': 'PROFILE',
+    },
   }),
-  
+
   userCheckIns: (userId: string) => ({
     TableName: TABLE_NAMES.MAIN,
     KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
     ExpressionAttributeValues: {
       ':pk': `USER#${userId}`,
-      ':sk': 'CHECKIN#'
-    }
+      ':sk': 'CHECKIN#',
+    },
   }),
-  
+
   userContacts: (userId: string) => ({
     TableName: TABLE_NAMES.MAIN,
     KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
     ExpressionAttributeValues: {
       ':pk': `USER#${userId}`,
-      ':sk': 'CONTACT#'
-    }
+      ':sk': 'CONTACT#',
+    },
   }),
-  
+
   userTransactions: (userId: string) => ({
     TableName: TABLE_NAMES.MAIN,
     KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk)',
     ExpressionAttributeValues: {
       ':pk': `USER#${userId}`,
-      ':sk': 'TRANSACTION#'
-    }
+      ':sk': 'TRANSACTION#',
+    },
   }),
-  
+
   allPlans: () => ({
     TableName: TABLE_NAMES.MAIN,
     IndexName: undefined, // Use main table scan with filter
     FilterExpression: 'begins_with(PK, :pk) AND SK = :sk',
     ExpressionAttributeValues: {
       ':pk': 'PLAN#',
-      ':sk': 'DETAILS'
-    }
+      ':sk': 'DETAILS',
+    },
   }),
-  
+
   // Critical query for escalation - uses GSI
   unacknowledgedCheckIns: (beforeTimestamp: string) => ({
     TableName: TABLE_NAMES.MAIN,
     IndexName: TABLE_NAMES.ESCALATION_GSI,
     KeyConditionExpression: '#status = :status AND responseDeadline < :deadline',
     ExpressionAttributeNames: {
-      '#status': 'status'
+      '#status': 'status',
     },
     ExpressionAttributeValues: {
       ':status': 'scheduled',
-      ':deadline': beforeTimestamp
-    }
-  })
+      ':deadline': beforeTimestamp,
+    },
+  }),
 };

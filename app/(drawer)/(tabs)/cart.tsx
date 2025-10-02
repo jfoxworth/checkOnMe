@@ -13,7 +13,7 @@ import { Button } from '@/components/Button';
 import Section from '@/components/layout/Section';
 import AnimatedView from '@/components/AnimatedView';
 import { CheckInPlan, UserUsage } from '@/lib/types';
-import { planService, userService } from '@/lib/api';
+import { purchaseService, userService } from '@/lib/api';
 
 const CartScreen = () => {
   // State for plans and user data from API
@@ -44,7 +44,7 @@ const CartScreen = () => {
       setError(null);
 
       // Load plans
-      const plansResponse = await planService.getAllPlans();
+      const plansResponse = await purchaseService.getCheckInPurchaseOptions();
       if (plansResponse.success && plansResponse.data) {
         setPlans(plansResponse.data);
       }

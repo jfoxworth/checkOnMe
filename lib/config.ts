@@ -13,16 +13,9 @@ export const CONFIG = {
     SECRET_ACCESS_KEY: getEnvVar('EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY'),
   },
 
-  // DynamoDB Table Names
+  // DynamoDB Single Table Configuration
   DYNAMODB: {
-    USERS_TABLE: getEnvVar('EXPO_PUBLIC_DYNAMODB_USERS_TABLE', 'checkonme-users'),
-    CHECKINS_TABLE: getEnvVar('EXPO_PUBLIC_DYNAMODB_CHECKINS_TABLE', 'checkonme-checkins'),
-    CONTACTS_TABLE: getEnvVar('EXPO_PUBLIC_DYNAMODB_CONTACTS_TABLE', 'checkonme-contacts'),
-    PLANS_TABLE: getEnvVar('EXPO_PUBLIC_DYNAMODB_PLANS_TABLE', 'checkonme-plans'),
-    TRANSACTIONS_TABLE: getEnvVar(
-      'EXPO_PUBLIC_DYNAMODB_TRANSACTIONS_TABLE',
-      'checkonme-transactions'
-    ),
+    MAIN_TABLE: getEnvVar('EXPO_PUBLIC_DYNAMODB_MAIN_TABLE', 'checkonme-main'),
   },
 
   // API Configuration
