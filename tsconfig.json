@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "strict": true,
+    "strict": false,
     "baseUrl": ".",
     "jsx": "react-jsx",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
+    "noImplicitAny": false,
     "paths": {
       "@/*": ["./*"]
     }

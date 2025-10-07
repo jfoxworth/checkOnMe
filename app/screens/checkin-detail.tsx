@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import ThemedText from '@/components/ThemedText';
@@ -6,6 +6,7 @@ import { Button } from '@/components/Button';
 import Header from '@/components/Header';
 import Icon from '@/components/Icon';
 import { Chip } from '@/components/Chip';
+import { useBackend } from '@/lib/contexts/BackendContext';
 
 // Types
 interface SelectedContact {
@@ -14,6 +15,7 @@ interface SelectedContact {
   email?: string;
   phone?: string;
   notificationType: 'email' | 'sms' | 'both';
+  isCustom?: boolean; // Flag to indicate if this is a custom contact specific to this check-in
 }
 
 interface CustomContact {
@@ -26,14 +28,20 @@ interface CustomContact {
 
 interface Location {
   id: number;
-  location: string;
+  name: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   dateTime: Date;
 }
 
 interface Companion {
   id: number;
   name: string;
-  contact: string;
+  email?: string;
+  phone?: string;
+  socialMedia?: string;
+  contact?: string; // For backward compatibility
 }
 
 interface Resolution {
@@ -87,12 +95,16 @@ const mockCheckIns: CheckIn[] = [
     locations: [
       {
         id: 1,
-        location: 'Blue Ridge Trail Head',
+        name: 'Blue Ridge Trail Head',
+        address: '123 Mountain Trail Road, Blue Ridge, NC',
         dateTime: new Date('2024-10-01T08:00:00'),
       },
       {
         id: 2,
-        location: 'Summit Camp',
+        name: 'Summit Camp',
+        address: 'Blue Ridge Summit, NC',
+        latitude: 35.8875,
+        longitude: -82.3248,
         dateTime: new Date('2024-10-01T15:00:00'),
       },
     ],
@@ -133,7 +145,10 @@ const mockCheckIns: CheckIn[] = [
     locations: [
       {
         id: 1,
-        location: 'Downtown Restaurant District',
+        name: 'Downtown Restaurant District',
+        address: '456 Main Street, Charlotte, NC',
+        latitude: 35.2271,
+        longitude: -80.8431,
         dateTime: new Date('2024-09-30T19:00:00'),
       },
     ],
@@ -171,17 +186,22 @@ const mockCheckIns: CheckIn[] = [
     locations: [
       {
         id: 1,
-        location: 'Starting Point - Home',
+        name: 'Starting Point - Home',
+        address: '789 Elm Street, Charlotte, NC',
         dateTime: new Date('2024-10-02T09:00:00'),
       },
       {
         id: 2,
-        location: 'Lunch Stop - Coastal Town',
+        name: 'Lunch Stop - Coastal Town',
+        address: 'Wilmington, NC',
+        latitude: 34.2104,
+        longitude: -77.8868,
         dateTime: new Date('2024-10-02T13:00:00'),
       },
       {
         id: 3,
-        location: 'Hotel - Seaside Resort',
+        name: 'Hotel - Seaside Resort',
+        address: 'Outer Banks, NC',
         dateTime: new Date('2024-10-02T18:00:00'),
       },
     ],
@@ -217,7 +237,10 @@ const mockCheckIns: CheckIn[] = [
     locations: [
       {
         id: 1,
-        location: 'Mountain Lake Campground',
+        name: 'Mountain Lake Campground',
+        address: 'Blue Ridge Parkway, Asheville, NC',
+        latitude: 35.6009,
+        longitude: -82.554,
         dateTime: new Date('2024-09-28T15:00:00'),
       },
     ],
@@ -253,7 +276,8 @@ const mockCheckIns: CheckIn[] = [
     locations: [
       {
         id: 1,
-        location: 'City Park Main Trail',
+        name: 'City Park Main Trail',
+        address: 'Charlotte City Park, Charlotte, NC',
         dateTime: new Date(Date.now() - 30 * 60 * 1000), // Started 30 minutes ago
       },
     ],
@@ -311,16 +335,178 @@ const getTypeLabel = (type: string) => {
 
 const CheckInDetailScreen = () => {
   const { id } = useLocalSearchParams();
-  const checkInId = parseInt(id as string);
-  const checkIn = mockCheckIns.find((c) => c.id === checkInId);
+  const { userCheckIns, userContacts, isLoadingCheckIns, acknowledgeCheckIn } = useBackend();
+  const [checkIn, setCheckIn] = useState<CheckIn | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [originalId, setOriginalId] = useState<string>(''); // Store original ID for editing
+
+  useEffect(() => {
+    if (id) {
+      const checkInIdStr = id as string;
+      const checkInIdNum = parseInt(checkInIdStr);
+
+      setOriginalId(checkInIdStr); // Store original ID
+
+      // First try to find in mock data (for examples) using numeric ID
+      let foundCheckIn = mockCheckIns.find((c) => c.id === checkInIdNum);
+
+      // If not found in mock data, look in user check-ins using string ID
+      if (!foundCheckIn && userCheckIns.length > 0) {
+        const userCheckIn = userCheckIns.find((c) => c.id === checkInIdStr);
+        if (userCheckIn) {
+          // Convert backend check-in to display format
+          const mapStatus = (
+            backendStatus: typeof userCheckIn.status
+          ): 'scheduled' | 'active' | 'completed' => {
+            switch (backendStatus) {
+              case 'acknowledged':
+              case 'escalated':
+              case 'missed':
+              case 'cancelled':
+                return 'completed';
+              case 'active':
+                return 'active';
+              default:
+                return 'scheduled';
+            }
+          };
+
+          // Map contacts from backend to display format
+          const selectedContactsForDisplay = userCheckIn.contacts
+            ? userCheckIn.contacts.map((contactId) => {
+                // Try to find the actual contact details
+                const actualContact = userContacts.find((c) => c.id === contactId);
+                if (actualContact) {
+                  return {
+                    id: parseInt(actualContact.id) || Date.now(),
+                    name:
+                      `${actualContact.firstName} ${actualContact.lastName}`.trim() || 'Contact',
+                    email: actualContact.email || '',
+                    phone: actualContact.phoneNumber || '',
+                    notificationType:
+                      actualContact.notificationMethods.includes('email') &&
+                      actualContact.notificationMethods.includes('sms')
+                        ? ('both' as const)
+                        : actualContact.notificationMethods.includes('email')
+                          ? ('email' as const)
+                          : ('sms' as const),
+                    isCustom: false, // This is a permanent contact
+                  };
+                } else {
+                  // Fallback for contacts that aren't found
+                  return {
+                    id: parseInt(contactId) || Date.now(),
+                    name: `Contact (${contactId})`,
+                    email: '',
+                    phone: '',
+                    notificationType: 'both' as const,
+                    isCustom: false,
+                  };
+                }
+              })
+            : [];
+
+          // Add custom contacts to the display
+          const customContactsForDisplay = userCheckIn.customContacts
+            ? userCheckIn.customContacts.map((customContact, index) => ({
+                id: Date.now() + index, // Generate unique ID for display
+                name: customContact.name,
+                email: customContact.email || '',
+                phone: customContact.phone || '',
+                notificationType: customContact.type as 'email' | 'sms' | 'both',
+                isCustom: true, // Mark as custom contact
+              }))
+            : [];
+
+          // Combine permanent and custom contacts
+          const allContactsForDisplay = [
+            ...selectedContactsForDisplay,
+            ...customContactsForDisplay,
+          ];
+
+          foundCheckIn = {
+            id: parseInt(userCheckIn.id) || Date.now(), // Convert to number for display compatibility
+            title: userCheckIn.title || `Check-in (${userCheckIn.type || 'custom'})`,
+            status: mapStatus(userCheckIn.status),
+            checkInDateTime: new Date(userCheckIn.scheduledTime),
+            type: userCheckIn.type || 'other',
+            selectedContacts: allContactsForDisplay,
+            customContacts: [],
+            locations: userCheckIn.location
+              ? [
+                  {
+                    id: 1,
+                    name: (userCheckIn.location as any).name || 'Check-in Location',
+                    address: (userCheckIn.location as any).address || undefined,
+                    latitude: userCheckIn.location.latitude,
+                    longitude: userCheckIn.location.longitude,
+                    dateTime: new Date(userCheckIn.scheduledTime),
+                  },
+                ]
+              : [],
+            companions: userCheckIn.companions
+              ? userCheckIn.companions.map((companion, index) => {
+                  // Type cast for backward compatibility
+                  const dbCompanion = companion as any;
+                  return {
+                    id: index + 1,
+                    name: dbCompanion.name,
+                    email:
+                      dbCompanion.email ||
+                      (dbCompanion.contact && dbCompanion.contact.includes('@')
+                        ? dbCompanion.contact
+                        : undefined),
+                    phone:
+                      dbCompanion.phone ||
+                      (dbCompanion.contact && !dbCompanion.contact.includes('@')
+                        ? dbCompanion.contact
+                        : undefined),
+                    socialMedia: dbCompanion.socialMedia,
+                    contact: dbCompanion.contact, // Keep for backward compatibility
+                  };
+                })
+              : [],
+            // Mock resolution data for user check-ins
+            resolution:
+              userCheckIn.status === 'acknowledged'
+                ? {
+                    type: 'acknowledged' as const,
+                    timestamp: new Date(userCheckIn.acknowledgedAt || userCheckIn.updatedAt),
+                    notes: 'User confirmed safety via app',
+                  }
+                : undefined,
+          };
+        }
+      }
+
+      setCheckIn(foundCheckIn || null);
+      setLoading(false);
+    }
+  }, [id, userCheckIns]);
+
+  if (loading || isLoadingCheckIns) {
+    return (
+      <>
+        <Header />
+        <View className="flex-1 items-center justify-center bg-white dark:bg-black">
+          <ThemedText>Loading check-in details...</ThemedText>
+        </View>
+      </>
+    );
+  }
 
   if (!checkIn) {
     return (
       <>
         <Header />
         <View className="flex-1 items-center justify-center bg-white p-4 dark:bg-black">
-          <ThemedText className="text-lg font-bold">Check-in not found</ThemedText>
-          <Button title="Go Back" onPress={() => router.back()} className="mt-4" />
+          <Icon name="AlertCircle" size={48} className="mb-4 text-red-500" />
+          <ThemedText className="mb-2 text-xl font-bold">Check-in not found</ThemedText>
+          <ThemedText className="mb-4 px-4 text-center text-gray-600 dark:text-gray-400">
+            The check-in you're looking for could not be found. It may have been deleted or doesn't
+            exist.
+          </ThemedText>
+          <Button title="Go Back" onPress={() => router.back()} variant="outline" />
         </View>
       </>
     );
@@ -330,8 +516,8 @@ const CheckInDetailScreen = () => {
   const isPast = checkIn.checkInDateTime < new Date();
 
   const handleEdit = () => {
-    // Navigate to create-checkin with pre-filled data
-    router.push(`/screens/create-checkin?edit=true&id=${checkIn.id}`);
+    // Navigate to create-checkin with pre-filled data using the original ID
+    router.push(`/screens/create-checkin?edit=true&id=${originalId}`);
   };
 
   const handleMarkComplete = () => {
@@ -406,72 +592,105 @@ const CheckInDetailScreen = () => {
             )}
           </View>
 
+          {/* Check-in Code */}
+          <View className="mb-6 rounded-lg border border-gray-300 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800">
+            <ThemedText className="mb-2 text-lg font-bold">Check-in Code</ThemedText>
+            <View className="flex-row items-center">
+              <Icon name="Lock" size={16} className="mr-2" />
+              <View className="rounded-lg bg-white p-3 dark:bg-gray-700">
+                <ThemedText className="text-2xl font-bold tracking-widest">
+                  {checkIn.checkInCode || '****'}
+                </ThemedText>
+              </View>
+            </View>
+            <ThemedText className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Enter this code when prompted to confirm your safety
+            </ThemedText>
+          </View>
+
           {/* Check-in Contacts */}
           <View className="mb-6">
             <ThemedText className="mb-3 text-lg font-bold">Check-in Contacts</ThemedText>
 
             {/* Selected Contacts */}
-            {checkIn.selectedContacts.map((contact) => (
-              <View
-                key={contact.id}
-                className="mb-3 rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-600 dark:bg-gray-800">
-                <ThemedText className="font-semibold">{contact.name}</ThemedText>
-                {contact.email && (
-                  <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
-                    📧 {contact.email}
-                  </ThemedText>
-                )}
-                {contact.phone && (
-                  <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
-                    📱 {contact.phone}
-                  </ThemedText>
-                )}
-                <View className="mt-2">
-                  <Chip
-                    label={`Notify via: ${contact.notificationType.toUpperCase()}`}
-                    className="bg-blue-100 dark:bg-blue-900/20"
-                  />
-                </View>
-              </View>
-            ))}
+            {checkIn.selectedContacts && checkIn.selectedContacts.length > 0
+              ? checkIn.selectedContacts.map((contact) => (
+                  <View
+                    key={contact.id}
+                    className={`mb-3 rounded-lg border p-3 ${
+                      contact.isCustom
+                        ? 'border-orange-300 bg-orange-50 dark:border-orange-600 dark:bg-orange-900/20'
+                        : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
+                    }`}>
+                    <View className="flex-row items-center justify-between">
+                      <ThemedText className="font-semibold">{contact.name}</ThemedText>
+                      {contact.isCustom && (
+                        <Chip label="Check-in Only" className="bg-orange-200 dark:bg-orange-700" />
+                      )}
+                    </View>
+                    {contact.email && (
+                      <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                        📧 {contact.email}
+                      </ThemedText>
+                    )}
+                    {contact.phone && (
+                      <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                        📱 {contact.phone}
+                      </ThemedText>
+                    )}
+                    <View className="mt-2">
+                      <Chip
+                        label={`Notify via: ${contact.notificationType.toUpperCase()}`}
+                        className="bg-blue-100 dark:bg-blue-900/20"
+                      />
+                    </View>
+                  </View>
+                ))
+              : null}
 
-            {/* Custom Contacts */}
-            {checkIn.customContacts.map((contact) => (
-              <View
-                key={contact.id}
-                className="mb-3 rounded-lg border border-gray-300 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700">
-                <ThemedText className="font-semibold">{contact.name}</ThemedText>
-                <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
-                  Type: {contact.type.toUpperCase()}
-                </ThemedText>
-              </View>
-            ))}
+            {!checkIn.selectedContacts || checkIn.selectedContacts.length === 0 ? (
+              <ThemedText className="text-gray-500 dark:text-gray-400">
+                No contacts assigned to this check-in
+              </ThemedText>
+            ) : null}
           </View>
 
           {/* Locations */}
           <View className="mb-6">
             <ThemedText className="mb-3 text-lg font-bold">Locations & Timeline</ThemedText>
-            {checkIn.locations.map((location, index) => (
-              <View
-                key={location.id}
-                className="mb-3 rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-600 dark:bg-gray-800">
-                <View className="mb-1 flex-row items-center">
-                  <Icon name="MapPin" size={16} className="mr-2" />
-                  <ThemedText className="font-semibold">Location {index + 1}</ThemedText>
-                </View>
-                <ThemedText className="mb-2 text-base">{location.location}</ThemedText>
-                <View className="flex-row items-center">
-                  <Icon name="Clock" size={14} className="mr-1" />
-                  <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
-                    {location.dateTime.toLocaleDateString()} at{' '}
-                    {location.dateTime.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </ThemedText>
-                </View>
-              </View>
-            ))}
+            {checkIn.locations && checkIn.locations.length > 0 ? (
+              <>
+                {checkIn.locations.map((location, index) => (
+                  <View
+                    key={location.id}
+                    className="mb-3 rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-600 dark:bg-gray-800">
+                    <View className="mb-1 flex-row items-center">
+                      <Icon name="MapPin" size={16} className="mr-2" />
+                      <ThemedText className="font-semibold">
+                        {location.name || 'Location'}
+                      </ThemedText>
+                    </View>
+                    {location.address && (
+                      <ThemedText className="mb-2 text-base">{location.address}</ThemedText>
+                    )}
+                    <View className="flex-row items-center">
+                      <Icon name="Clock" size={14} className="mr-1" />
+                      <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                        {location.dateTime.toLocaleDateString()} at{' '}
+                        {location.dateTime.toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </ThemedText>
+                    </View>
+                  </View>
+                ))}
+              </>
+            ) : (
+              <ThemedText className="text-gray-500 dark:text-gray-400">
+                No location information available
+              </ThemedText>
+            )}
           </View>
 
           {/* Companions */}
@@ -483,9 +702,30 @@ const CheckInDetailScreen = () => {
                   key={companion.id}
                   className="mb-3 rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-600 dark:bg-gray-800">
                   <ThemedText className="font-semibold">{companion.name}</ThemedText>
-                  <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
-                    {companion.contact}
-                  </ThemedText>
+                  {companion.phone && (
+                    <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                      Text: {companion.phone}
+                    </ThemedText>
+                  )}
+                  {companion.email && (
+                    <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                      Email: {companion.email}
+                    </ThemedText>
+                  )}
+                  {companion.socialMedia && (
+                    <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                      Social Media: {companion.socialMedia}
+                    </ThemedText>
+                  )}
+                  {/* Fallback for backward compatibility */}
+                  {companion.contact &&
+                    !companion.phone &&
+                    !companion.email &&
+                    !companion.socialMedia && (
+                      <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                        Contact: {companion.contact}
+                      </ThemedText>
+                    )}
                 </View>
               ))}
             </View>

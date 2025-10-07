@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { View, Pressable, RefreshControl } from 'react-native';
 import ThemedText from '@/components/ThemedText';
 import { Button } from '@/components/Button';
 import Section from '@/components/layout/Section';
@@ -8,6 +8,7 @@ import ThemeScroller from '@/components/ThemeScroller';
 import { Placeholder } from '@/components/Placeholder';
 import Header from '@/components/Header';
 import Icon from '@/components/Icon';
+import { useBackend } from '@/lib/contexts/BackendContext';
 
 // Mock data for check-ins
 const checkIns = [
@@ -80,20 +81,51 @@ const getTypeIcon = (type: string) => {
 };
 
 const CheckInsScreen = () => {
+  const { userCheckIns, isLoadingCheckIns, fetchUserCheckIns } = useBackend();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Example check-ins (will be shown before user check-ins)
+  const exampleCheckIns = checkIns;
+
+  // Convert backend check-ins to display format
+  const userCheckInsFormatted = userCheckIns.map((checkIn) => ({
+    id: checkIn.id, // Use string ID directly from backend
+    title: checkIn.title || `Check-in (${checkIn.type || 'custom'})`,
+    status: checkIn.status,
+    checkInTime: new Date(checkIn.scheduledTime).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+    date:
+      new Date(checkIn.scheduledTime).toLocaleDateString() === new Date().toLocaleDateString()
+        ? 'Today'
+        : new Date(checkIn.scheduledTime).toLocaleDateString(),
+    type: checkIn.type || 'other',
+  }));
+
+  // Combine example and user check-ins
+  const allCheckIns = [...exampleCheckIns, ...userCheckInsFormatted];
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserCheckIns();
+    setRefreshing(false);
+  };
   return (
     <>
       <Header />
-      <ThemeScroller>
+      <ThemeScroller
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}>
         <Section
           titleSize="3xl"
           className="mt-16 pb-10"
           title="Check Ins"
-          subtitle={`${checkIns.length} check-ins scheduled`}
+          subtitle={`${allCheckIns.length} check-ins total (${exampleCheckIns.length} examples + ${userCheckIns.length} yours)`}
         />
 
-        {checkIns.length > 0 ? (
+        {allCheckIns.length > 0 ? (
           <>
-            {checkIns.map((checkIn) => (
+            {allCheckIns.map((checkIn) => (
               <View
                 key={checkIn.id}
                 className="mx-4 mb-4 rounded-lg border border-light-secondary bg-white p-4 dark:border-dark-secondary dark:bg-neutral-900">

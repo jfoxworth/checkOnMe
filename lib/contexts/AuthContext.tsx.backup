@@ -1,0 +1,329 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { 
+  signUp, 
+  signIn, 
+  signOut, 
+  getCurrentUser, 
+  confirmSignUp, 
+  resendSignUpCode,
+  AuthUser
+} from '@aws-amplify/auth';
+import { Hub } from '@aws-amplify/core';
+import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+
+// Warm up the browser for better UX
+WebBrowser.maybeCompleteAuthSession();
+
+export interface User {
+  userId: string;
+  email: string;
+  name?: string;
+  emailVerified: boolean;
+  attributes?: Record<string, any>;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+
+  // Email/Password authentication
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, name?: string) => Promise<void>;
+  confirmSignUp: (email: string, code: string) => Promise<void>;
+  resendConfirmationCode: (email: string) => Promise<void>;
+
+  // Social authentication
+  signInWithGoogle: () => Promise<void>;
+  signInWithFacebook: () => Promise<void>;
+
+  // Sign out
+  signOut: () => Promise<void>;
+
+  // Password reset
+  forgotPassword: (email: string) => Promise<void>;
+  confirmForgotPassword: (email: string, code: string, newPassword: string) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check if user is authenticated on app start
+  useEffect(() => {
+    checkAuthState();
+
+    // Listen for auth events
+    const unsubscribe = Hub.listen('auth', ({ payload }) => {
+      const { event } = payload;
+      switch (event) {
+        case 'signedIn':
+          console.log('User signed in');
+          getCurrentAuthUser();
+          break;
+        case 'signedOut':
+          console.log('User signed out');
+          setUser(null);
+          break;
+        case 'tokenRefresh':
+          console.log('Token refreshed');
+          break;
+        case 'tokenRefresh_failure':
+          console.log('Token refresh failed');
+          setUser(null);
+          break;
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const checkAuthState = async () => {
+    try {
+      setIsLoading(true);
+      await getCurrentAuthUser();
+    } catch (error: any) {
+      // This is expected when no user is logged in
+      if (error.name === 'UserUnAuthenticatedException') {
+        console.log('No authenticated user found - user needs to sign in');
+      } else {
+        console.log('Auth check error:', error.message);
+      }
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getCurrentAuthUser = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      const userEmail = currentUser.signInDetails?.loginId || '';
+
+      setUser({
+        userId: currentUser.userId,
+        email: userEmail,
+        name: userEmail.split('@')[0], // Use email prefix as fallback name
+        emailVerified: true,
+        attributes: currentUser,
+      });
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      throw error;
+    }
+  };
+
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      const result = await signIn({
+        username: email,
+        password,
+      });
+
+      if (result.isSignedIn) {
+        await getCurrentAuthUser();
+      }
+    } catch (error) {
+      console.error('Error signing in:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signUpWithEmail = async (email: string, password: string, name?: string) => {
+    try {
+      setIsLoading(true);
+      const userAttributes: Record<string, string> = { email };
+      if (name) userAttributes.name = name;
+
+      const result = await signUp({
+        username: email,
+        password,
+        options: {
+          userAttributes,
+        },
+      });
+
+      console.log('Sign up result:', result);
+    } catch (error) {
+      console.error('Error signing up:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const confirmSignUpCode = async (email: string, code: string) => {
+    try {
+      setIsLoading(true);
+      await confirmSignUp({
+        username: email,
+        confirmationCode: code,
+      });
+    } catch (error) {
+      console.error('Error confirming sign up:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resendConfirmationCode = async (email: string) => {
+    try {
+      await resendSignUpCode({
+        username: email,
+      });
+    } catch (error) {
+      console.error('Error resending confirmation code:', error);
+      throw error;
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      setIsLoading(true);
+      // TODO: Configure OAuth domain in AWS Cognito User Pool
+      // For now, throw a helpful error message
+      throw new Error('Google sign-in requires OAuth configuration in AWS Cognito User Pool. Please configure the OAuth domain and identity providers in the AWS Console.');
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signInWithFacebook = async () => {
+    try {
+      setIsLoading(true);
+      // TODO: Configure OAuth domain in AWS Cognito User Pool
+      // For now, throw a helpful error message
+      throw new Error('Facebook sign-in requires OAuth configuration in AWS Cognito User Pool. Please configure the OAuth domain and identity providers in the AWS Console.');
+    } catch (error) {
+      console.error('Error signing in with Facebook:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+      const clientId = process.env.EXPO_PUBLIC_AWS_USER_POOL_CLIENT_ID;
+      
+      if (!cognitoDomain || !clientId) {
+        throw new Error('Missing Cognito domain or client ID in environment variables');
+      }
+
+      const redirectUri = AuthSession.makeRedirectUri({
+        scheme: 'checkonme',
+        path: 'auth',
+      });
+
+      const authUrl = `https://${cognitoDomain}/oauth2/authorize?` + 
+        `response_type=code&` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `identity_provider=Facebook&` +
+        `scope=openid+email+profile`;
+
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+
+      if (result.type === 'success' && result.url) {
+        const url = new URL(result.url);
+        const code = url.searchParams.get('code');
+        
+        if (code) {
+          // Exchange the authorization code for tokens
+          const tokenUrl = `https://${cognitoDomain}/oauth2/token`;
+          const tokenResponse = await fetch(tokenUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `grant_type=authorization_code&client_id=${clientId}&code=${code}&redirect_uri=${encodeURIComponent(redirectUri)}`,
+          });
+
+          if (tokenResponse.ok) {
+            const tokens = await tokenResponse.json();
+            // Handle successful authentication with tokens
+            await getCurrentAuthUser();
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error signing in with Facebook:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      setIsLoading(true);
+      await signOut();
+      setUser(null);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const forgotPassword = async (email: string) => {
+    try {
+      const { resetPassword } = await import('@aws-amplify/auth');
+      await resetPassword({ username: email });
+    } catch (error) {
+      console.error('Error requesting password reset:', error);
+      throw error;
+    }
+  };
+
+  const confirmForgotPassword = async (email: string, code: string, newPassword: string) => {
+    try {
+      const { confirmResetPassword } = await import('@aws-amplify/auth');
+      await confirmResetPassword({
+        username: email,
+        confirmationCode: code,
+        newPassword,
+      });
+    } catch (error) {
+      console.error('Error confirming password reset:', error);
+      throw error;
+    }
+  };
+
+  const value: AuthContextType = {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    signInWithEmail,
+    signUpWithEmail,
+    confirmSignUp: confirmSignUpCode,
+    resendConfirmationCode,
+    signInWithGoogle,
+    signInWithFacebook,
+    signOut: handleSignOut,
+    forgotPassword,
+    confirmForgotPassword,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

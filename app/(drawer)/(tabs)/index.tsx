@@ -17,42 +17,7 @@ import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const products = [
-  {
-    id: 1,
-    title: 'Premium Cotton T-Shirt',
-    description: 'High-quality cotton t-shirt with a comfortable fit. Perfect for everyday wear.',
-    price: '$29.99',
-    rating: 4.8,
-    image: require('@/assets/img/male.jpg'),
-    badge: 'New',
-  },
-  {
-    id: 2,
-    title: 'Classic Denim Jeans',
-    description: 'Classic fit denim jeans with premium quality fabric.',
-    price: '$59.99',
-    rating: 4.6,
-    image: require('@/assets/img/female-2.jpg'),
-    badge: 'Sale',
-  },
-  {
-    id: 3,
-    title: 'Leather Sneakers',
-    description: 'Stylish leather sneakers with cushioned sole.',
-    price: '$89.99',
-    rating: 4.9,
-    image: require('@/assets/img/female-1.jpg'),
-  },
-  {
-    id: 4,
-    title: 'Wool Sweater',
-    description: 'Warm and cozy wool sweater for cold days.',
-    price: '$79.99',
-    rating: 4.7,
-    image: require('@/assets/img/male-2.jpg'),
-  },
-];
+// Removed unused product data for check-in focused app
 
 export default function HomeScreen() {
   const rightComponents = [
@@ -191,7 +156,7 @@ export default function HomeScreen() {
             <Button
               title="Create Check-In"
               className="mt-4 px-8 py-3"
-              onPress={() => router.push('/checkins')}
+              onPress={() => router.push('/screens/create-checkin')}
             />
           </Section>
         </View>
@@ -211,19 +176,4 @@ const CategorySelect = (props: any) => {
   );
 };
 
-const FeaturedProduct = (props: any) => {
-  return (
-    <Link href="/screens/product-detail" asChild>
-      <Pressable className="h-[400px] w-[300px]">
-        <ImageBackground source={props.image} className="h-full w-full">
-          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.3)']} className="h-full w-full">
-            <View className="flex-1 items-start justify-end p-4">
-              <Text className="text-base font-bold text-white">{props.title}</Text>
-              <Text className="mb-3 text-xs text-white">{props.price}</Text>
-            </View>
-          </LinearGradient>
-        </ImageBackground>
-      </Pressable>
-    </Link>
-  );
-};
+// Removed unused product components for check-in focused app

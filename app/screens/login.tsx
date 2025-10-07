@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
-import { View, Pressable, StyleSheet, Text } from 'react-native';
+import { View, Pressable, StyleSheet, Text, Alert } from 'react-native';
 import { Stack, Link, router } from 'expo-router';
 import Input from '@/components/forms/Input';
 import ThemedText from '@/components/ThemedText';
 import { Button } from '@/components/Button';
 import Icon from '@/components/Icon';
-import useThemeColors from '@/app/contexts/ThemeColors';
+import useThemeColors from '@/lib/contexts/ThemeColors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
+  const { signInWithEmail, signInWithGoogle, signInWithFacebook, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,34 +42,82 @@ export default function LoginScreen() {
     return true;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
 
     if (isEmailValid && isPasswordValid) {
-      setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
-        // Navigate to home screen after successful login
-        router.replace('/(drawer)/(tabs)/');
-      }, 1500);
+      try {
+        await signInWithEmail(email, password);
+        router.replace('/(drawer)/(tabs)');
+      } catch (error: any) {
+        // Check if the error is due to unconfirmed email
+        if (
+          error.name === 'UserNotConfirmedException' ||
+          error.message?.includes('not confirmed') ||
+          error.message?.includes('not verified')
+        ) {
+          Alert.alert(
+            'Email Not Verified',
+            'Your email address needs to be verified before you can sign in. Would you like to verify it now?',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Verify Email',
+                onPress: () =>
+                  router.push(`/screens/confirm-signup?email=${encodeURIComponent(email)}`),
+              },
+            ]
+          );
+        } else {
+          Alert.alert(
+            'Login Failed',
+            error.message || 'An error occurred during login. Please try again.'
+          );
+        }
+      }
     }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    console.log(`Login with ${provider}`);
-    // Implement social login logic here
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithGoogle();
+      router.replace('/(drawer)/(tabs)');
+    } catch (error: any) {
+      Alert.alert(
+        'Google Login Failed',
+        error.message || 'An error occurred during Google login. Please try again.'
+      );
+    }
+  };
+
+  const handleFacebookLogin = async () => {
+    try {
+      await signInWithFacebook();
+      router.replace('/(drawer)/(tabs)');
+    } catch (error: any) {
+      Alert.alert(
+        'Facebook Login Failed',
+        error.message || 'An error occurred during Facebook login. Please try again.'
+      );
+    }
   };
 
   return (
-    <View style={{ paddingTop: insets.top }} className="flex-1 bg-light-primary dark:bg-dark-primary p-6">
-
-
+    <View
+      style={{ paddingTop: insets.top }}
+      className="flex-1 bg-light-primary p-6 dark:bg-dark-primary">
       <View className="mt-10">
-        <ThemedText className="text-4xl font-outfit-bold mb-14">Velora<Text className='text-sky-500'>.</Text></ThemedText>
-        <ThemedText className="text-3xl font-bold mb-1">Welcome back</ThemedText>
-        <ThemedText className="text-light-subtext dark:text-dark-subtext mb-14">Sign in to your account</ThemedText>
+        <ThemedText className="mb-14 font-outfit-bold text-4xl">
+          Check On Me<Text className="text-sky-500">.</Text>
+        </ThemedText>
+        <ThemedText className="mb-1 text-3xl font-bold">Welcome back</ThemedText>
+        <ThemedText className="mb-14 text-light-subtext dark:text-dark-subtext">
+          Sign in to your account
+        </ThemedText>
 
         <Input
           label="Email"
@@ -97,10 +146,11 @@ export default function LoginScreen() {
           autoCapitalize="none"
         />
 
-        <Link className='underline text-black dark:text-white text-sm mb-4' href="/screens/forgot-password">
+        <Link
+          className="mb-4 text-sm text-black underline dark:text-white"
+          href="/screens/forgot-password">
           Forgot Password?
         </Link>
-
 
         <Button
           title="Login"
@@ -110,13 +160,46 @@ export default function LoginScreen() {
           className="mb-6"
         />
 
+        <View className="mb-6 flex-row items-center">
+          <View className="bg-light-border dark:bg-dark-border h-px flex-1" />
+          <ThemedText className="mx-4 text-light-subtext dark:text-dark-subtext">OR</ThemedText>
+          <View className="bg-light-border dark:bg-dark-border h-px flex-1" />
+        </View>
 
+        <Button
+          title="Continue with Google"
+          onPress={handleGoogleLogin}
+          variant="outline"
+          size="large"
+          className="mb-3"
+        />
+
+        <Button
+          title="Continue with Facebook"
+          onPress={handleFacebookLogin}
+          variant="outline"
+          size="large"
+          className="mb-6"
+        />
 
         <View className="flex-row justify-center">
-          <ThemedText className="text-light-subtext dark:text-dark-subtext">Don't have an account? </ThemedText>
+          <ThemedText className="text-light-subtext dark:text-dark-subtext">
+            Don't have an account?{' '}
+          </ThemedText>
           <Link href="/screens/signup" asChild>
             <Pressable>
               <ThemedText className="underline">Sign up</ThemedText>
+            </Pressable>
+          </Link>
+        </View>
+
+        <View className="mt-4 flex-row justify-center">
+          <ThemedText className="text-light-subtext dark:text-dark-subtext">
+            Need to verify your email?{' '}
+          </ThemedText>
+          <Link href="/screens/confirm-signup" asChild>
+            <Pressable>
+              <ThemedText className="underline">Verify here</ThemedText>
             </Pressable>
           </Link>
         </View>

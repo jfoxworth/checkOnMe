@@ -117,12 +117,11 @@ export default function SignupScreen() {
         await signUpWithEmail(email, password, name);
         Alert.alert(
           'Sign Up Successful',
-          'Please check your email for a verification code and enter it on the next screen.',
+          'Please check your email to verify your account before signing in.',
           [
             {
-              text: 'Continue',
-              onPress: () =>
-                router.push(`/screens/confirm-signup?email=${encodeURIComponent(email)}`),
+              text: 'OK',
+              onPress: () => router.push('/screens/login'),
             },
           ]
         );

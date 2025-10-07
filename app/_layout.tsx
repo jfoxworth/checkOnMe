@@ -1,13 +1,21 @@
+// Minimal polyfills for React Native - must be imported first
+import 'react-native-get-random-values';
+import 'react-native-url-polyfill/auto';
+
 import '../global.css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Stack } from 'expo-router';
 import { NativeWindStyleSheet } from 'nativewind';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { UserDataProvider, useUserData } from './contexts/UserDataContext';
+import { ThemeProvider } from '@/lib/contexts/ThemeContext';
+import { UserDataProvider } from '@/lib/contexts/UserDataContext';
+import { AuthProvider } from '@/lib/contexts/AuthContext';
+import { BackendProvider } from '@/lib/contexts/BackendContext';
+import { AuthGuard } from '@/lib/contexts/AuthGuard';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import useThemedNavigation from './hooks/useThemedNavigation';
 import { Platform } from 'react-native';
 import { initializeApp } from '@/lib/init';
+import { configureCognito } from '@/lib/aws-config';
 
 NativeWindStyleSheet.setOutput({
   default: 'native',
@@ -15,28 +23,31 @@ NativeWindStyleSheet.setOutput({
 
 function ThemedLayout() {
   const { ThemedStatusBar, screenOptions } = useThemedNavigation();
-  const { initializeUserData } = useUserData();
+  const isInitializedRef = useRef(false);
 
   // Initialize app data and configuration
   useEffect(() => {
     const initialize = async () => {
+      if (isInitializedRef.current) return;
+      isInitializedRef.current = true;
+
+      // Configure Amplify/Cognito first
+      configureCognito();
+
       await initializeApp();
-      
-      // Initialize with sample user after app setup
-      // In a real app, you'd get this from login/auth
-      const sampleUserId = 'sample-user-123';
-      await initializeUserData(sampleUserId);
     };
-    
+
     initialize().catch(console.error);
-  }, [initializeUserData]);
+  }, []);
 
   return (
     <>
       <ThemedStatusBar />
-      <Stack screenOptions={screenOptions}>
-        <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-      </Stack>
+      <AuthGuard>
+        <Stack screenOptions={screenOptions}>
+          <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+        </Stack>
+      </AuthGuard>
     </>
   );
 }
@@ -47,9 +58,13 @@ export default function RootLayout() {
       className={`bg-light-primary dark:bg-dark-primary ${Platform.OS === 'ios' ? 'pb-0 ' : ''}`}
       style={{ flex: 1 }}>
       <ThemeProvider>
-        <UserDataProvider>
-          <ThemedLayout />
-        </UserDataProvider>
+        <AuthProvider>
+          <BackendProvider>
+            <UserDataProvider>
+              <ThemedLayout />
+            </UserDataProvider>
+          </BackendProvider>
+        </AuthProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

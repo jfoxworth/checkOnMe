@@ -38,6 +38,9 @@ export interface CheckIn {
   acknowledgedAt?: string; // ISO string - when user confirmed safety
   escalatedAt?: string; // ISO string - when emergency contacts were notified
   createdAt: string;
+  
+  // Security - 4-digit code for check-in verification
+  checkInCode?: string; // 4-digit code user sets for check-in confirmation
   updatedAt: string;
 
   // Location
@@ -49,6 +52,7 @@ export interface CheckIn {
     latitude: number;
     longitude: number;
     address?: string;
+    name?: string;
   };
   currentLocation?: {
     latitude: number;
@@ -59,6 +63,19 @@ export interface CheckIn {
 
   // Emergency escalation
   contacts: string[]; // Array of contact IDs for simplified API
+  customContacts?: Array<{
+    name: string;
+    email: string;
+    phone: string;
+    type: string;
+  }>; // One-time contacts specific to this check-in
+  companions?: Array<{
+    name: string;
+    email?: string;
+    phone?: string;
+    socialMedia?: string;
+    contact?: string; // For backward compatibility
+  }>; // People accompanying the user
   escalationContacts?: string[]; // Array of contact PKs
   escalationLevel?: number; // 0 = none, 1 = first reminder, 2 = emergency contacts, etc.
 

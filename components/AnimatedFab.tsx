@@ -1,5 +1,12 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, TouchableWithoutFeedback, ViewStyle, TextStyle, Dimensions, LayoutChangeEvent } from 'react-native';
+import {
+  View,
+  TouchableWithoutFeedback,
+  ViewStyle,
+  TextStyle,
+  Dimensions,
+  LayoutChangeEvent,
+} from 'react-native';
 import { styled } from 'nativewind';
 import Animated, {
   useSharedValue,
@@ -7,10 +14,10 @@ import Animated, {
   withTiming,
   interpolate,
   Extrapolate,
-  runOnJS
+  runOnJS,
 } from 'react-native-reanimated';
 import Icon, { IconName } from './Icon';
-import useThemeColors from '@/app/contexts/ThemeColors';
+import useThemeColors from '@/lib/contexts/ThemeColors';
 
 const StyledAnimatedView = styled(Animated.View);
 const StyledView = styled(View);
@@ -43,19 +50,19 @@ const AnimatedFab: React.FC<AnimatedFabProps> = ({
   iconClassName,
   onOpen,
   onClose,
-  style
+  style,
 }) => {
   const colors = useThemeColors();
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // Default size of the FAB in collapsed state
   const baseSize = iconSize * 2;
-  
+
   // Improved content height measurement
   const [contentHeight, setContentHeight] = useState(baseSize * 2);
   const contentMeasureRef = useRef<View>(null);
   const [isContentMeasured, setIsContentMeasured] = useState(false);
-  
+
   // Animation values
   const animation = useSharedValue(0);
 
@@ -93,15 +100,15 @@ const AnimatedFab: React.FC<AnimatedFabProps> = ({
       }, 100);
     }
   }, [contentMeasureRef.current, isContentMeasured, baseSize]);
-  
+
   // Handle toggle state
   const toggleOpen = useCallback(() => {
     const newValue = !isOpen;
     setIsOpen(newValue);
-    
+
     // Run animation
     animation.value = withTiming(newValue ? 1 : 0, { duration: 300 });
-    
+
     // Trigger callbacks if provided
     if (newValue && onOpen) {
       onOpen();
@@ -109,7 +116,7 @@ const AnimatedFab: React.FC<AnimatedFabProps> = ({
       onClose();
     }
   }, [isOpen, animation, onOpen, onClose]);
-  
+
   // Position classes based on the position prop
   const getPositionClasses = (): string => {
     switch (position) {
@@ -125,7 +132,7 @@ const AnimatedFab: React.FC<AnimatedFabProps> = ({
         return 'bottom-4 right-4';
     }
   };
-  
+
   // Animated styles for the container
   const containerStyle = useAnimatedStyle(() => {
     // Width expands from a circle to a rectangle
@@ -135,7 +142,7 @@ const AnimatedFab: React.FC<AnimatedFabProps> = ({
       [baseSize, windowWidth - 30],
       Extrapolate.CLAMP
     );
-    
+
     // Use the measured content height for the expanded state
     const height = interpolate(
       animation.value,
@@ -143,7 +150,7 @@ const AnimatedFab: React.FC<AnimatedFabProps> = ({
       [baseSize, contentHeight],
       Extrapolate.CLAMP
     );
-    
+
     // Border radius changes from circle to rounded rectangle
     const borderRadius = interpolate(
       animation.value,
@@ -151,14 +158,14 @@ const AnimatedFab: React.FC<AnimatedFabProps> = ({
       [baseSize / 2, 12],
       Extrapolate.CLAMP
     );
-    
+
     return {
       width,
       height,
       borderRadius,
     };
   });
-  
+
   // Animated styles for the icon
   const iconAnimatedStyle = useAnimatedStyle(() => {
     const rotate = interpolate(
@@ -167,36 +174,21 @@ const AnimatedFab: React.FC<AnimatedFabProps> = ({
       [0, 45], // Rotate 45 degrees when open
       Extrapolate.CLAMP
     );
-    
-    const opacity = interpolate(
-      animation.value,
-      [0, 0.5, 1],
-      [1, 0.3, 0],
-      Extrapolate.CLAMP
-    );
-    
+
+    const opacity = interpolate(animation.value, [0, 0.5, 1], [1, 0.3, 0], Extrapolate.CLAMP);
+
     return {
       transform: [{ rotate: `${rotate}deg` }],
       opacity,
     };
   });
-  
+
   // Animated styles for the content
   const contentAnimatedStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      animation.value,
-      [0, 0.7, 1],
-      [0, 0, 1],
-      Extrapolate.CLAMP
-    );
-    
-    const translateY = interpolate(
-      animation.value,
-      [0, 1],
-      [20, 0],
-      Extrapolate.CLAMP
-    );
-    
+    const opacity = interpolate(animation.value, [0, 0.7, 1], [0, 0, 1], Extrapolate.CLAMP);
+
+    const translateY = interpolate(animation.value, [0, 1], [20, 0], Extrapolate.CLAMP);
+
     return {
       opacity,
       transform: [{ translateY }],
@@ -204,51 +196,45 @@ const AnimatedFab: React.FC<AnimatedFabProps> = ({
   });
 
   const bgColor = backgroundColor || colors.highlight;
-  
+
   return (
     <>
       {/* Hidden content measure view */}
-      <StyledView 
-        className="absolute opacity-0 pointer-events-none left-[-9999px]"
+      <StyledView
+        className="pointer-events-none absolute left-[-9999px] opacity-0"
         style={{ width: windowWidth - 30 }}
-        ref={contentMeasureRef}
-      >
-        <View className="pb-10">
-          {children}
-        </View>
+        ref={contentMeasureRef}>
+        <View className="pb-10">{children}</View>
       </StyledView>
-    
+
       <TouchableWithoutFeedback>
         <StyledAnimatedView
-          className={
-            `absolute items-center justify-center z-10 shadow-md shadow-black/30 bg-black dark:bg-white
+          className={`absolute z-10 items-center justify-center bg-black shadow-md shadow-black/30 dark:bg-white
             ${getPositionClasses()}
-            ${className}`
-          }
+            ${className}`}
           style={[
             containerStyle,
             //{ backgroundColor: bgColor }
-          ]}
-        >
+          ]}>
           <TouchableWithoutFeedback onPress={toggleOpen}>
-            <StyledAnimatedView 
-              className={`absolute items-center justify-center z-20 ${iconClassName}`}
-              style={[iconAnimatedStyle, style]}
-            >
-            <Icon
-              name={icon}
-              size={iconSize}
-                color={iconColor || 'white'}
-              />
+            <StyledAnimatedView
+              className={`absolute z-20 items-center justify-center ${iconClassName}`}
+              style={[iconAnimatedStyle, style]}>
+              <Icon name={icon} size={iconSize} color={iconColor || 'white'} />
             </StyledAnimatedView>
           </TouchableWithoutFeedback>
 
           {/**THIS IS CONTENT OF THE FAB */}
-          <StyledAnimatedView 
-            className={`absolute w-full h-full p-6 pb-0 items-start justify-start z-10 ${contentClassName}`}
-            style={[contentAnimatedStyle, style]}
-          >
-            <Icon name="X" size={24} color="white" className='absolute top-2 right-2 z-50'  onPress={toggleOpen} />
+          <StyledAnimatedView
+            className={`absolute z-10 h-full w-full items-start justify-start p-6 pb-0 ${contentClassName}`}
+            style={[contentAnimatedStyle, style]}>
+            <Icon
+              name="X"
+              size={24}
+              color="white"
+              className="absolute right-2 top-2 z-50"
+              onPress={toggleOpen}
+            />
             {children}
           </StyledAnimatedView>
         </StyledAnimatedView>
@@ -257,4 +243,4 @@ const AnimatedFab: React.FC<AnimatedFabProps> = ({
   );
 };
 
-export default AnimatedFab; 
+export default AnimatedFab;

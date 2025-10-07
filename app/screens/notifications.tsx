@@ -11,7 +11,7 @@ import ThemedText from '@/components/ThemedText';
 import TabScreenWrapper from '@/components/TabScreenWrapper';
 import Icon, { IconName } from '@/components/Icon';
 
-type NotificationType = 'order' | 'promotion' | 'stock' | 'shipping' | 'all';
+type NotificationType = 'checkin' | 'alert' | 'success' | 'reminder' | 'all';
 
 interface Notification {
   id: number;
@@ -39,115 +39,97 @@ export default function NotificationsScreen() {
   const notifications: Notification[] = [
     {
       id: 1,
-      type: 'order',
-      title: 'Order Confirmed',
-      message: 'Your order #12345 has been confirmed and is being processed',
+      type: 'checkin',
+      title: 'Check-in Reminder',
+      message: 'Your hiking trip check-in is due in 30 minutes',
       time: '2 min ago',
       read: false,
-      icon: 'ShoppingBag'
+      icon: 'Clock',
     },
     {
       id: 2,
-      type: 'shipping',
-      title: 'Order Shipped',
-      message: 'Your order #12344 has been shipped via UPS',
+      type: 'alert',
+      title: 'Emergency Alert Sent',
+      message: 'Emergency contacts notified for missed check-in',
       time: '1 hour ago',
       read: true,
-      icon: 'Truck'
+      icon: 'AlertTriangle',
     },
     {
       id: 3,
-      type: 'promotion',
-      title: 'Flash Sale!',
-      message: '24-hour sale! 50% off all summer items',
+      type: 'success',
+      title: 'Check-in Completed',
+      message: 'Your date night check-in was successful',
       time: '2 hours ago',
       read: false,
-      icon: 'Percent'
+      icon: 'CheckCircle',
     },
     {
       id: 4,
-      type: 'stock',
-      title: 'Back In Stock',
-      message: 'Nike Air Max 90 is back in stock in your size',
+      type: 'reminder',
+      title: 'Safety Tip',
+      message: 'Remember to share your location for road trips',
       time: '1 day ago',
       read: true,
-      icon: 'Package'
+      icon: 'MapPin',
     },
     {
       id: 5,
-      type: 'promotion',
-      title: 'New Collection',
-      message: 'Fall collection 2024 just arrived',
+      type: 'checkin',
+      title: 'Upcoming Check-in',
+      message: 'Road trip check-in scheduled for tomorrow',
       time: '2 days ago',
       read: false,
-      icon: 'Sparkles'
+      icon: 'Calendar',
     },
     {
       id: 6,
-      type: 'order',
-      title: 'Order Delivered',
-      message: 'Your order #12340 has been delivered',
+      type: 'success',
+      title: 'Check-in Successful',
+      message: 'Your solo hiking check-in was completed',
       time: '3 days ago',
       read: true,
-      icon: 'PackageCheck'
+      icon: 'CheckCircle',
     },
     {
       id: 7,
-      type: 'shipping',
-      title: 'Shipping Update',
-      message: 'Your package is delayed by 1 day',
+      type: 'alert',
+      title: 'Contact Updated',
+      message: 'Emergency contact information updated',
       time: '4 days ago',
       read: false,
-      icon: 'AlertTriangle'
+      icon: 'User',
     },
     {
       id: 8,
-      type: 'stock',
-      title: 'Price Drop',
-      message: 'Adidas Ultraboost is now 30% off',
+      type: 'reminder',
+      title: 'Safety Features',
+      message: 'Explore new safety features in the app',
       time: '5 days ago',
       read: true,
-      icon: 'ArrowDown'
+      icon: 'Shield',
     },
     {
       id: 9,
-      type: 'promotion',
-      title: 'Special Offer',
-      message: 'Buy one, get one 50% off on all accessories',
+      type: 'checkin',
+      title: 'Check-in Created',
+      message: 'Your first date check-in has been scheduled',
       time: '6 days ago',
       read: false,
-      icon: 'Tag'
+      icon: 'Plus',
     },
     {
       id: 10,
-      type: 'order',
-      title: 'Order Issue',
-      message: 'There was an issue processing your payment',
+      type: 'success',
+      title: 'Welcome!',
+      message: 'Welcome to CheckOnMe - Stay safe out there',
       time: '1 week ago',
       read: true,
-      icon: 'AlertCircle'
+      icon: 'Heart',
     },
-    {
-      id: 11,
-      type: 'shipping',
-      title: 'Shipment Arrived',
-      message: 'Your package has arrived at the local facility',
-      time: '1 week ago',
-      read: false,
-      icon: 'MapPin'
-    },
-    {
-      id: 12,
-      type: 'stock',
-      title: 'Wishlist Item Available',
-      message: 'Levi\'s 501 jeans are now available in your size',
-      time: '2 weeks ago',
-      read: true,
-      icon: 'Heart'
-    }
   ];
 
-  const filteredNotifications = notifications.filter(notification =>
+  const filteredNotifications = notifications.filter((notification) =>
     selectedType === 'all' ? true : notification.type === selectedType
   );
 
@@ -155,13 +137,11 @@ export default function NotificationsScreen() {
     <Link href={`/screens/notifications/${notification.id}`} asChild>
       <ListItem
         leading={
-          <View className="bg-light-secondary/30 dark:bg-dark-subtext/30 w-10 h-10 rounded-full items-center justify-center">
+          <View className="h-10 w-10 items-center justify-center rounded-full bg-light-secondary/30 dark:bg-dark-subtext/30">
             <Icon name={notification.icon} size={20} />
           </View>
         }
-        title={
-          <ThemedText className="font-bold">{notification.title}</ThemedText>
-        }
+        title={<ThemedText className="font-bold">{notification.title}</ThemedText>}
         subtitle={notification.message}
         trailing={
           <ThemedText className="text-xs text-light-subtext dark:text-dark-subtext">
@@ -175,36 +155,33 @@ export default function NotificationsScreen() {
 
   return (
     <>
-      <Header 
-        showBackButton 
-        title="Notifications" 
-      />
+      <Header showBackButton title="Notifications" />
       <View className="flex-1 bg-light-primary dark:bg-dark-primary">
-        <View className="p-4 flex-row gap-1">
+        <View className="flex-row gap-1 p-4">
           <Chip
             label="All"
             isSelected={selectedType === 'all'}
             onPress={() => setSelectedType('all')}
           />
           <Chip
-            label="Orders"
-            isSelected={selectedType === 'order'}
-            onPress={() => setSelectedType('order')}
+            label="Check-ins"
+            isSelected={selectedType === 'checkin'}
+            onPress={() => setSelectedType('checkin')}
           />
           <Chip
-            label="Shipping"
-            isSelected={selectedType === 'shipping'}
-            onPress={() => setSelectedType('shipping')}
+            label="Alerts"
+            isSelected={selectedType === 'alert'}
+            onPress={() => setSelectedType('alert')}
           />
           <Chip
-            label="Promotions"
-            isSelected={selectedType === 'promotion'}
-            onPress={() => setSelectedType('promotion')}
+            label="Success"
+            isSelected={selectedType === 'success'}
+            onPress={() => setSelectedType('success')}
           />
           <Chip
-            label="Stock"
-            isSelected={selectedType === 'stock'}
-            onPress={() => setSelectedType('stock')}
+            label="Reminders"
+            isSelected={selectedType === 'reminder'}
+            onPress={() => setSelectedType('reminder')}
           />
         </View>
 
@@ -215,9 +192,7 @@ export default function NotificationsScreen() {
             ) : (
               <List variant="divided">
                 {filteredNotifications.map((notification) => (
-                  <View key={notification.id}>
-                    {renderNotification(notification)}
-                  </View>
+                  <View key={notification.id}>{renderNotification(notification)}</View>
                 ))}
               </List>
             )}

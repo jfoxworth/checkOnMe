@@ -5,6 +5,7 @@ import ThemedText from '@/components/ThemedText';
 import { Button } from '@/components/Button';
 import Header from '@/components/Header';
 import { Chip } from '@/components/Chip';
+import { useBackend } from '@/lib/contexts/BackendContext';
 
 interface ContactFormData {
   name: string;
@@ -23,6 +24,7 @@ interface FormErrors {
 }
 
 const CreateContactScreen = () => {
+  const { createContact, isLoadingContacts } = useBackend();
   const [formData, setFormData] = useState<ContactFormData>({
     name: '',
     relation: '',
@@ -70,15 +72,29 @@ const CreateContactScreen = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    // Here you would save the contact data to your store/database
-    console.log('Creating contact:', formData);
+    try {
+      const response = await createContact({
+        name: formData.name,
+        relationship: formData.relation,
+        phone: formData.phone,
+        email: formData.email,
+        preferredMethod: formData.preferredMethod === 'text' ? 'sms' : formData.preferredMethod,
+      });
 
-    Alert.alert('Success', 'Contact created successfully!', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+      if (response.success) {
+        Alert.alert('Success', 'Contact created successfully!', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      } else {
+        Alert.alert('Error', response.error || 'Failed to create contact');
+      }
+    } catch (error) {
+      console.error('Error creating contact:', error);
+      Alert.alert('Error', 'An unexpected error occurred');
+    }
   };
 
   const isFormValid = () => {
@@ -322,10 +338,10 @@ const CreateContactScreen = () => {
               className="flex-1"
             />
             <Button
-              title="Create Contact"
+              title={isLoadingContacts ? 'Creating...' : 'Create Contact'}
               onPress={handleSubmit}
               className="flex-1"
-              disabled={!isFormValid()}
+              disabled={!isFormValid() || isLoadingContacts}
             />
           </View>
         </View>

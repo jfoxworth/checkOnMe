@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 import { User, UserUsage, CheckIn, Contact, CheckInPlan } from '@/lib/types';
 import { api } from '@/lib/api';
+import { useAuth } from './AuthContext';
 
 // Types for our context state
 interface UserDataState {
@@ -10,14 +11,14 @@ interface UserDataState {
   checkIns: CheckIn[];
   contacts: Contact[];
   purchaseOptions: CheckInPlan[];
-  
+
   // Loading states
   isLoading: boolean;
   isRefreshing: boolean;
-  
+
   // Error states
   error: string | null;
-  
+
   // Current user ID
   currentUserId: string | null;
 }
@@ -42,7 +43,7 @@ type UserDataAction =
 // Context interface
 interface UserDataContextType {
   state: UserDataState;
-  
+
   // Main operations
   initializeUserData: (userId: string) => Promise<void>;
   refreshAllData: () => Promise<void>;
@@ -50,13 +51,17 @@ interface UserDataContextType {
   refreshCheckIns: () => Promise<void>;
   refreshContacts: () => Promise<void>;
   refreshPurchaseOptions: () => Promise<void>;
-  
+
   // Update operations (called after successful API calls)
   updateUserAfterPurchase: (newCredits: number) => void;
   addNewCheckIn: (checkIn: CheckIn) => void;
-  updateCheckInStatus: (checkInId: string, status: CheckIn['status'], additionalData?: Partial<CheckIn>) => void;
+  updateCheckInStatus: (
+    checkInId: string,
+    status: CheckIn['status'],
+    additionalData?: Partial<CheckIn>
+  ) => void;
   addNewContact: (contact: Contact) => void;
-  
+
   // Utilities
   clearUserData: () => void;
   getCurrentUserId: () => string | null;
@@ -80,73 +85,75 @@ const userDataReducer = (state: UserDataState, action: UserDataAction): UserData
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
-    
+
     case 'SET_REFRESHING':
       return { ...state, isRefreshing: action.payload };
-    
+
     case 'SET_ERROR':
       return { ...state, error: action.payload, isLoading: false, isRefreshing: false };
-    
+
     case 'SET_USER_ID':
       return { ...state, currentUserId: action.payload };
-    
+
     case 'SET_USER':
       return { ...state, user: action.payload, error: null };
-    
+
     case 'SET_USER_USAGE':
       return { ...state, userUsage: action.payload };
-    
+
     case 'SET_CHECKINS':
       return { ...state, checkIns: action.payload };
-    
+
     case 'SET_CONTACTS':
       return { ...state, contacts: action.payload };
-    
+
     case 'SET_PURCHASE_OPTIONS':
       return { ...state, purchaseOptions: action.payload };
-    
+
     case 'ADD_CHECKIN':
-      return { 
-        ...state, 
+      return {
+        ...state,
         checkIns: [action.payload, ...state.checkIns].sort(
           (a, b) => new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime()
-        )
+        ),
       };
-    
+
     case 'UPDATE_CHECKIN':
       return {
         ...state,
-        checkIns: state.checkIns.map(checkIn =>
+        checkIns: state.checkIns.map((checkIn) =>
           checkIn.id === action.payload.id ? action.payload : checkIn
-        )
+        ),
       };
-    
+
     case 'ADD_CONTACT':
       return { ...state, contacts: [...state.contacts, action.payload] };
-    
+
     case 'UPDATE_USER_CREDITS':
       if (!state.user) return state;
       const updatedUser = {
         ...state.user,
         usedCredits: action.payload.usedCredits,
         availableCredits: action.payload.availableCredits,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
-      const updatedUsage = state.userUsage ? {
-        ...state.userUsage,
-        checkInsUsed: action.payload.usedCredits,
-        checkInsRemaining: action.payload.availableCredits
-      } : null;
-      
-      return { 
-        ...state, 
+      const updatedUsage = state.userUsage
+        ? {
+            ...state.userUsage,
+            checkInsUsed: action.payload.usedCredits,
+            checkInsRemaining: action.payload.availableCredits,
+          }
+        : null;
+
+      return {
+        ...state,
         user: updatedUser,
-        userUsage: updatedUsage
+        userUsage: updatedUsage,
       };
-    
+
     case 'CLEAR_ALL_DATA':
       return initialState;
-    
+
     default:
       return state;
   }
@@ -158,6 +165,17 @@ const UserDataContext = createContext<UserDataContextType | undefined>(undefined
 // Provider component
 export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(userDataReducer, initialState);
+  const { user: authUser, isAuthenticated } = useAuth();
+
+  // Auto-initialize user data when authenticated user changes
+  useEffect(() => {
+    if (isAuthenticated && authUser?.userId) {
+      initializeUserData(authUser.userId);
+    } else if (!isAuthenticated) {
+      // Clear data when user logs out
+      dispatch({ type: 'CLEAR_ALL_DATA' });
+    }
+  }, [isAuthenticated, authUser?.userId]);
 
   // Initialize user data (call this after login)
   const initializeUserData = async (userId: string) => {
@@ -167,17 +185,18 @@ export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       dispatch({ type: 'SET_USER_ID', payload: userId });
 
       // Fetch all user data in parallel
-      const [userResponse, checkInsResponse, contactsResponse, purchaseOptionsResponse] = await Promise.all([
-        api.getUserById(userId),
-        api.getUserCheckIns(userId),
-        api.getUserContacts(userId),
-        api.getCheckInPurchaseOptions(),
-      ]);
+      const [userResponse, checkInsResponse, contactsResponse, purchaseOptionsResponse] =
+        await Promise.all([
+          api.getUserById(userId),
+          api.getUserCheckIns(userId),
+          api.getUserContacts(userId),
+          api.getCheckInPurchaseOptions(),
+        ]);
 
       // Handle user data
       if (userResponse.success && userResponse.data) {
         dispatch({ type: 'SET_USER', payload: userResponse.data });
-        
+
         // Get user usage
         const usageResponse = await api.getUserUsage(userId);
         if (usageResponse.success && usageResponse.data) {
@@ -199,7 +218,6 @@ export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       if (purchaseOptionsResponse.success && purchaseOptionsResponse.data) {
         dispatch({ type: 'SET_PURCHASE_OPTIONS', payload: purchaseOptionsResponse.data });
       }
-
     } catch (error) {
       console.error('Error initializing user data:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Failed to load user data' });
@@ -222,7 +240,6 @@ export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }
         refreshContacts(),
         refreshPurchaseOptions(),
       ]);
-
     } catch (error) {
       console.error('Error refreshing all data:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Failed to refresh data' });
@@ -280,35 +297,39 @@ export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Update user credits after purchase
   const updateUserAfterPurchase = (newCredits: number) => {
     if (!state.user) return;
-    
-    dispatch({ 
-      type: 'UPDATE_USER_CREDITS', 
-      payload: { 
+
+    dispatch({
+      type: 'UPDATE_USER_CREDITS',
+      payload: {
         usedCredits: state.user.usedCredits,
-        availableCredits: state.user.availableCredits + newCredits 
-      }
+        availableCredits: state.user.availableCredits + newCredits,
+      },
     });
   };
 
   // Add new check-in (called after successful creation)
   const addNewCheckIn = (checkIn: CheckIn) => {
     dispatch({ type: 'ADD_CHECKIN', payload: checkIn });
-    
+
     // Update user credits
     if (state.user) {
-      dispatch({ 
-        type: 'UPDATE_USER_CREDITS', 
-        payload: { 
+      dispatch({
+        type: 'UPDATE_USER_CREDITS',
+        payload: {
           usedCredits: state.user.usedCredits + 1,
-          availableCredits: state.user.availableCredits - 1 
-        }
+          availableCredits: state.user.availableCredits - 1,
+        },
       });
     }
   };
 
   // Update check-in status (called after acknowledgment/escalation)
-  const updateCheckInStatus = (checkInId: string, status: CheckIn['status'], additionalData?: Partial<CheckIn>) => {
-    const existingCheckIn = state.checkIns.find(c => c.id === checkInId);
+  const updateCheckInStatus = (
+    checkInId: string,
+    status: CheckIn['status'],
+    additionalData?: Partial<CheckIn>
+  ) => {
+    const existingCheckIn = state.checkIns.find((c) => c.id === checkInId);
     if (!existingCheckIn) return;
 
     const updatedCheckIn = {
@@ -350,11 +371,7 @@ export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }
     getCurrentUserId,
   };
 
-  return (
-    <UserDataContext.Provider value={contextValue}>
-      {children}
-    </UserDataContext.Provider>
-  );
+  return <UserDataContext.Provider value={contextValue}>{children}</UserDataContext.Provider>;
 };
 
 // Hook to use the context

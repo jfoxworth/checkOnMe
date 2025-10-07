@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Pressable, TextInput, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Pressable, TextInput, Alert, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
 import Icon from '@/components/Icon';
 import ThemeScroller from '@/components/ThemeScroller';
@@ -8,6 +8,7 @@ import { Button } from '@/components/Button';
 import Section from '@/components/layout/Section';
 import { Placeholder } from '@/components/Placeholder';
 import Header from '@/components/Header';
+import { useBackend } from '@/lib/contexts/BackendContext';
 
 // Mock data for contacts
 const initialContacts = [
@@ -38,26 +39,70 @@ const initialContacts = [
 ];
 
 const ContactsScreen = () => {
-  const [contacts, setContacts] = useState(initialContacts);
+  const { userContacts, isLoadingContacts, fetchUserContacts, deleteContact } = useBackend();
   const [searchTerm, setSearchTerm] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  const filteredContacts = contacts.filter(
+  // Example contacts (will be shown before user contacts)
+  const exampleContacts = initialContacts;
+
+  // Combine example and user contacts for display
+  const allContacts = [
+    ...exampleContacts,
+    ...userContacts.map((contact) => ({
+      id: parseInt(contact.id) || Date.now(),
+      name: `${contact.firstName} ${contact.lastName}`.trim() || contact.firstName,
+      email: contact.email || '',
+      phone: contact.phoneNumber || '',
+      relationship: contact.relationship || '',
+      type:
+        contact.notificationMethods.includes('email') && contact.notificationMethods.includes('sms')
+          ? 'both'
+          : contact.notificationMethods.includes('email')
+            ? 'email'
+            : 'sms',
+    })),
+  ];
+
+  const filteredContacts = allContacts.filter(
     (contact) =>
       contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.relationship.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const deleteContact = (contactId: number) => {
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserContacts();
+    setRefreshing(false);
+  };
+
+  const deleteContactHandler = (contactId: number) => {
+    const contact = allContacts.find((c) => c.id === contactId);
+    const isUserContact = userContacts.some((c) => parseInt(c.id) === contactId);
+
+    if (!isUserContact) {
+      Alert.alert('Cannot Delete', 'Example contacts cannot be deleted');
+      return;
+    }
+
     Alert.alert(
       'Delete Contact',
-      'Are you sure you want to remove this contact from your emergency list?',
+      `Are you sure you want to remove ${contact?.name} from your emergency list?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => setContacts(contacts.filter((contact) => contact.id !== contactId)),
+          onPress: async () => {
+            const userContact = userContacts.find((c) => parseInt(c.id) === contactId);
+            if (userContact) {
+              const response = await deleteContact(userContact.id);
+              if (!response.success) {
+                Alert.alert('Error', response.error || 'Failed to delete contact');
+              }
+            }
+          },
         },
       ]
     );
@@ -79,12 +124,13 @@ const ContactsScreen = () => {
   return (
     <>
       <Header />
-      <ThemeScroller>
+      <ThemeScroller
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}>
         <Section
           titleSize="3xl"
           className="mt-16 pb-6"
           title="Check In Contacts"
-          subtitle={`These are contacts you can set to be notified if you miss a check-in`}
+          subtitle={`${allContacts.length} contacts available (${exampleContacts.length} examples + ${userContacts.length} yours)`}
         />
 
         {/* Add New Contact Button */}
@@ -154,7 +200,7 @@ const ContactsScreen = () => {
                     </Pressable>
 
                     <Pressable
-                      onPress={() => deleteContact(contact.id)}
+                      onPress={() => deleteContactHandler(contact.id)}
                       className="rounded-lg bg-red-100 p-2 dark:bg-red-900/20">
                       <Icon name="Trash2" size={16} className="text-red-600 dark:text-red-400" />
                     </Pressable>

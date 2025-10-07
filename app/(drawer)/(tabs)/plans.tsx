@@ -1,39 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Pressable, Image } from 'react-native';
-import { Stack, router, Link } from 'expo-router';
-import Header, { HeaderIcon } from '@/components/Header';
+import React, { useState, useEffect } from 'react';
+import { View, Text } from 'react-native';
+import { router } from 'expo-router';
+import Header from '@/components/Header';
 import Icon from '@/components/Icon';
 import ThemedText from '@/components/ThemedText';
 import ThemedScroller from '@/components/ThemeScroller';
-import ConfirmationModal from '@/components/ConfirmationModal';
-import { ActionSheetRef } from 'react-native-actions-sheet';
-import { CardScroller } from '@/components/CardScroller';
-import Card from '@/components/Card';
 import { Button } from '@/components/Button';
 import Section from '@/components/layout/Section';
-import AnimatedView from '@/components/AnimatedView';
-import { CheckInPlan, UserUsage } from '@/lib/types';
-import { purchaseService, userService } from '@/lib/api';
+import { UserUsage } from '@/lib/types';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
-const CartScreen = () => {
-  // State for plans and user data from API
-  const [plans, setPlans] = useState<CheckInPlan[]>([]);
+const PlansScreen = () => {
+  // Get auth context
+  const { user, isAuthenticated } = useAuth();
+
+  // State for user data
   const [userUsage, setUserUsage] = useState<UserUsage>({
-    checkInsUsed: 0,
-    checkInsRemaining: 0,
-    totalCheckIns: 0,
-    isLoggedIn: false,
-    userId: '',
+    checkInsUsed: 3,
+    checkInsRemaining: 7,
+    totalCheckIns: 10,
+    isLoggedIn: true, // Force logged in state for now
+    userId: user?.id || 'demo-user',
     currentPeriodStart: '',
     currentPeriodEnd: '',
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Mock user ID - in a real app, this would come from your auth context
-  const MOCK_USER_ID = 'user-john-doe';
-
-  // Load data on component mount
+  const [error, setError] = useState<string | null>(null); // Load data on component mount
   useEffect(() => {
     loadData();
   }, []);
@@ -43,35 +35,16 @@ const CartScreen = () => {
       setLoading(true);
       setError(null);
 
-      // Load plans
-      const plansResponse = await purchaseService.getCheckInPurchaseOptions();
-      if (plansResponse.success && plansResponse.data) {
-        setPlans(plansResponse.data);
-      }
-
-      // Load user usage (if logged in)
-      // For demo purposes, we'll simulate being logged in
-      try {
-        const usageResponse = await userService.getUserUsage(MOCK_USER_ID);
-        if (usageResponse.success && usageResponse.data) {
-          setUserUsage({
-            ...usageResponse.data,
-            isLoggedIn: true,
-          });
-        } else {
-          // User not found or not logged in
-          setUserUsage((prev) => ({
-            ...prev,
-            isLoggedIn: false,
-          }));
-        }
-      } catch (userError) {
-        // User doesn't exist or not logged in - show logged out state
-        setUserUsage((prev) => ({
-          ...prev,
-          isLoggedIn: false,
-        }));
-      }
+      // For now, simulate logged in state with demo data
+      setUserUsage({
+        checkInsUsed: 3,
+        checkInsRemaining: 7,
+        totalCheckIns: 10,
+        isLoggedIn: true,
+        userId: user?.id || 'demo-user',
+        currentPeriodStart: new Date().toISOString(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
@@ -80,18 +53,9 @@ const CartScreen = () => {
     }
   };
 
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-
-  const handleSelectPlan = (planId: string) => {
-    setSelectedPlan(planId);
-  };
-
   const handlePurchase = () => {
-    if (!selectedPlan) {
-      return;
-    }
-    // Navigate to checkout with selected plan
-    router.push(`/screens/checkout?plan=${selectedPlan}`);
+    // Navigate to billing/checkout for 10 check-ins at $10
+    router.push('/screens/billing?purchase=checkins');
   };
 
   const usagePercentage = userUsage.isLoggedIn
@@ -100,14 +64,7 @@ const CartScreen = () => {
 
   return (
     <>
-      <Header
-        title="Check-in Credits"
-        rightComponents={[
-          selectedPlan && plans.find((p) => p.id === selectedPlan)?.price !== 0 && (
-            <Button title="Purchase" onPress={handlePurchase} size="small" />
-          ),
-        ]}
-      />
+      <Header title="Check-in Credits" />
 
       {loading ? (
         <View className="flex-1 items-center justify-center p-4">
@@ -242,95 +199,69 @@ const CartScreen = () => {
               {userUsage.isLoggedIn ? 'Buy More Check-ins' : 'Check-in Bundles'}
             </ThemedText>
 
-            {plans.map((plan) => {
-              const isSelected = selectedPlan === plan.id;
-              const isFreePlan = plan.price === 0;
+            {/* Simple 10 Check-ins Offer */}
+            <View className="mb-4 rounded-lg border-2 border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+              <View className="mb-3 flex-row items-center justify-between">
+                <View className="flex-1 pr-4">
+                  <ThemedText className="text-lg font-bold">10 Check-ins</ThemedText>
+                  <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                    Perfect for regular adventurers and safety-conscious individuals
+                  </ThemedText>
+                </View>
+                <View className="flex-shrink-0 items-end">
+                  <ThemedText className="text-2xl font-bold" numberOfLines={1}>
+                    $10
+                  </ThemedText>
+                  <ThemedText
+                    className="text-sm text-gray-600 dark:text-gray-400"
+                    numberOfLines={1}>
+                    10 check-ins
+                  </ThemedText>
+                </View>
+              </View>
 
-              return (
-                <Pressable
-                  key={plan.id}
-                  onPress={() => handleSelectPlan(plan.id)}
-                  className={`mb-4 rounded-lg border-2 p-4 ${
-                    isSelected
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
-                  } ${isFreePlan && userUsage.isLoggedIn ? 'opacity-60' : ''}`}
-                  disabled={isFreePlan && userUsage.isLoggedIn}>
-                  {plan.popular && (
-                    <View className="absolute -top-2 left-4">
-                      <View className="rounded-full bg-blue-500 px-3 py-1">
-                        <ThemedText className="text-xs font-bold text-white">Best Value</ThemedText>
-                      </View>
-                    </View>
-                  )}
+              <View className="mb-4 space-y-2">
+                <View className="flex-row items-center">
+                  <Icon name="Check" size={16} className="mr-2 text-green-500" />
+                  <ThemedText className="text-sm text-gray-700 dark:text-gray-300">
+                    10 safety check-ins for any activity
+                  </ThemedText>
+                </View>
+                <View className="flex-row items-center">
+                  <Icon name="Check" size={16} className="mr-2 text-green-500" />
+                  <ThemedText className="text-sm text-gray-700 dark:text-gray-300">
+                    Emergency contact notifications
+                  </ThemedText>
+                </View>
+                <View className="flex-row items-center">
+                  <Icon name="Check" size={16} className="mr-2 text-green-500" />
+                  <ThemedText className="text-sm text-gray-700 dark:text-gray-300">
+                    Location sharing and safety features
+                  </ThemedText>
+                </View>
+                <View className="flex-row items-center">
+                  <Icon name="Check" size={16} className="mr-2 text-green-500" />
+                  <ThemedText className="text-sm text-gray-700 dark:text-gray-300">
+                    No expiration date
+                  </ThemedText>
+                </View>
+              </View>
 
-                  <View className="mb-3 flex-row items-center justify-between">
-                    <View>
-                      <ThemedText className="text-lg font-bold">{plan.name}</ThemedText>
-                      <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
-                        {plan.description}
-                      </ThemedText>
-                    </View>
-                    <View className="items-end">
-                      <ThemedText className="text-2xl font-bold">
-                        {plan.price === 0 ? 'FREE' : `$${plan.price}`}
-                      </ThemedText>
-                      <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
-                        {plan.checkIns} check-ins
-                      </ThemedText>
-                    </View>
-                  </View>
-
-                  <View className="space-y-2">
-                    {plan.features.map((feature, index) => (
-                      <View key={index} className="flex-row items-center">
-                        <Icon name="Check" size={16} className="mr-2 text-green-500" />
-                        <ThemedText className="text-sm text-gray-700 dark:text-gray-300">
-                          {feature}
-                        </ThemedText>
-                      </View>
-                    ))}
-                  </View>
-
-                  {isFreePlan && userUsage.isLoggedIn && (
-                    <View className="mt-3 rounded bg-gray-100 p-2 dark:bg-gray-700">
-                      <ThemedText className="text-center text-sm text-gray-600 dark:text-gray-400">
-                        Free starter bundle already claimed
-                      </ThemedText>
-                    </View>
-                  )}
-
-                  {isSelected && !isFreePlan && (
-                    <View className="mt-3 flex-row items-center justify-center">
-                      <Icon name="CheckCircle" size={20} className="mr-2 text-blue-500" />
-                      <ThemedText className="font-medium text-blue-600 dark:text-blue-400">
-                        Selected
-                      </ThemedText>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
+              <Button
+                title="Purchase 10 Check-ins - $10"
+                onPress={handlePurchase}
+                size="large"
+                className="w-full"
+              />
+            </View>
           </Section>
 
-          {/* Bottom spacing for floating button */}
+          {/* Bottom spacing */}
           <View className="h-20" />
         </ThemedScroller>
-      )}
-
-      {/* Floating Purchase Button */}
-      {selectedPlan && plans.find((p) => p.id === selectedPlan)?.price !== 0 && (
-        <View className="absolute bottom-0 left-0 right-0 border-t border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-          <Button
-            title={`Purchase ${plans.find((p) => p.id === selectedPlan)?.name} - $${plans.find((p) => p.id === selectedPlan)?.price}`}
-            onPress={handlePurchase}
-            size="large"
-            className="w-full"
-          />
-        </View>
       )}
     </>
   );
 };
 
-export default CartScreen;
+export default PlansScreen;

@@ -1,8 +1,8 @@
-import { useThemeColors } from 'app/contexts/ThemeColors';
+import { useThemeColors } from '@/lib/contexts/ThemeColors';
 import { TabButton } from 'components/TabButton';
 import { Tabs, TabList, TabTrigger, TabSlot } from 'expo-router/ui';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
-import { useDrawer } from '@/app/contexts/DrawerContext';
+import { useDrawer } from '@/lib/contexts/DrawerContext';
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DrawerButton from '@/components/DrawerButton';
@@ -36,8 +36,8 @@ export default function Layout() {
             Contacts
           </TabButton>
         </TabTrigger>
-        <TabTrigger name="cart" href="/cart" asChild>
-          <TabButton hasBadge labelAnimated={true} icon="CreditCard">
+        <TabTrigger name="plans" href="/plans" asChild>
+          <TabButton labelAnimated={true} icon="CreditCard">
             Plans
           </TabButton>
         </TabTrigger>

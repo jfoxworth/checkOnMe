@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, View, ViewStyle } from 'react-native';
 import Icon from './Icon';
 import Avatar from './Avatar';
-import { useThemeColors } from 'app/contexts/ThemeColors';
+import { useThemeColors } from '@/lib/contexts/ThemeColors';
 import { DrawerActions, useNavigation, NavigationProp } from '@react-navigation/native';
 
 interface DrawerButtonProps {
@@ -37,15 +37,9 @@ export default function DrawerButton({
 
   return (
     <View className={`rounded-full ${className}`} style={style}>
-      <Pressable
-        onPress={handlePress}
-        style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-      >
+      <Pressable onPress={handlePress} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
         {isAvatar ? (
-          <Avatar
-            src="https://mighty.tools/mockmind-api/content/human/5.jpg"
-            size="xs"
-          />
+          <Avatar src="https://mighty.tools/mockmind-api/content/human/5.jpg" size="xs" />
         ) : (
           <Icon name="Menu" size={sizeMap[size]} color={colors.text} />
         )}

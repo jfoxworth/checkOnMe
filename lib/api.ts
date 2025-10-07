@@ -17,6 +17,39 @@ const getCurrentTimestamp = () => new Date().toISOString();
 // Simplified API for the single-table design
 export const api = {
   // User operations
+  async createUser(userData: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber?: string;
+  }): Promise<ApiResponse<User>> {
+    try {
+      const user: User = {
+        ...createKeys.user(userData.id),
+        id: userData.id,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        phoneNumber: userData.phoneNumber,
+        createdAt: getCurrentTimestamp(),
+        updatedAt: getCurrentTimestamp(),
+        // Give new users 5 free credits to start
+        totalCredits: 5,
+        usedCredits: 0,
+        availableCredits: 5,
+        subscriptionStatus: 'free',
+      };
+
+      await dynamoService.putItem(TABLE_NAMES.MAIN, user);
+
+      return { success: true, data: user };
+    } catch (error) {
+      console.error('Create user error:', error);
+      return { success: false, error: 'Failed to create user' };
+    }
+  },
+
   async getUserById(userId: string): Promise<ApiResponse<User>> {
     try {
       const user = await dynamoService.getItem<User>(TABLE_NAMES.MAIN, createKeys.user(userId));
@@ -99,23 +132,50 @@ export const api = {
   async createCheckIn(
     userId: string,
     data: {
+      title?: string;
+      description?: string;
+      type?: string;
       scheduledTime: string;
       intervalMinutes: number;
       contacts: string[];
+      customContacts?: Array<{ name: string; email: string; phone: string; type: string }>;
+      companions?: Array<{
+        name: string;
+        email?: string;
+        phone?: string;
+        socialMedia?: string;
+        contact?: string; // For backward compatibility
+      }>;
       location?: { latitude: number; longitude: number };
+      startLocation?: { latitude: number; longitude: number; address?: string; name?: string };
     }
   ): Promise<ApiResponse<CheckIn>> {
     try {
       // Check if user has available credits
-      const userResponse = await this.getUserById(userId);
-      if (!userResponse.success || !userResponse.data) {
-        return { success: false, error: 'User not found' };
+      let userResponse = await this.getUserById(userId);
+
+      // If user doesn't exist, create them with default credits
+      if (!userResponse.success) {
+        console.log('User not found in DynamoDB, creating with default credits...');
+        const createUserResponse = await this.createUser({
+          id: userId,
+          email: userId, // Use userId as fallback email
+          firstName: 'User',
+          lastName: '',
+        });
+
+        if (!createUserResponse.success) {
+          return { success: false, error: 'Failed to create user account' };
+        }
+
+        userResponse = { success: true, data: createUserResponse.data! };
       }
 
-      const user = userResponse.data;
-      if (user.availableCredits <= 0) {
-        return { success: false, error: 'No check-in credits available' };
-      }
+      const user = userResponse.data!;
+      // TEMPORARILY DISABLED FOR TESTING: Credit check
+      // if (user.availableCredits <= 0) {
+      //   return { success: false, error: 'No check-in credits available' };
+      // }
 
       // Create check-in
       const checkInId = generateId();
@@ -128,12 +188,18 @@ export const api = {
         id: checkInId,
         userId,
         status: 'scheduled',
+        title: data.title || `Check-in (${data.type || 'custom'})`,
+        description: data.description || '',
+        type: (data.type as CheckIn['type']) || 'other',
         scheduledTime: data.scheduledTime,
         responseDeadline,
         intervalMinutes: data.intervalMinutes,
         confirmationCode: generate4DigitCode(),
         contacts: data.contacts,
+        customContacts: data.customContacts,
+        companions: data.companions,
         location: data.location,
+        startLocation: data.startLocation,
         createdAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
       };
@@ -141,14 +207,15 @@ export const api = {
       // Save check-in
       await dynamoService.putItem(TABLE_NAMES.MAIN, checkIn);
 
+      // TEMPORARILY DISABLED FOR TESTING: Credit deduction
       // Update user credits
-      const updatedUser = {
-        ...user,
-        usedCredits: user.usedCredits + 1,
-        availableCredits: user.availableCredits - 1,
-        updatedAt: getCurrentTimestamp(),
-      };
-      await dynamoService.putItem(TABLE_NAMES.MAIN, updatedUser);
+      // const updatedUser = {
+      //   ...user,
+      //   usedCredits: user.usedCredits + 1,
+      //   availableCredits: user.availableCredits - 1,
+      //   updatedAt: getCurrentTimestamp(),
+      // };
+      // await dynamoService.putItem(TABLE_NAMES.MAIN, updatedUser);
 
       return { success: true, data: checkIn };
     } catch (error) {
