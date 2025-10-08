@@ -17,6 +17,7 @@ export interface CreateCheckInData {
   title: string;
   description?: string;
   type: 'hiking' | 'date' | 'road-trip' | 'solo' | 'work' | 'other';
+  checkInCode?: string;
   scheduledTime: string;
   intervalMinutes: number;
   contacts: string[]; // Changed from contactIds to contacts to match API
@@ -71,13 +72,13 @@ interface BackendContextType {
     checkInId: string,
     status: CheckIn['status']
   ) => Promise<ApiResponse<CheckIn>>;
-  acknowledgeCheckIn: (
-    checkInId: string,
-    confirmationCode: string
-  ) => Promise<ApiResponse<CheckIn>>;
+  acknowledgeCheckIn: (checkInId: string, checkInCode: string) => Promise<ApiResponse<CheckIn>>;
   getCheckInById: (checkInId: string) => Promise<CheckIn | null>;
   confirmCheckIn: (checkInId: string) => Promise<ApiResponse<CheckIn>>;
   deleteCheckIn: (checkInId: string) => Promise<ApiResponse<void>>;
+
+  // Escalation operations
+  processEscalations: () => Promise<ApiResponse<{ processed: number; escalated: any[] }>>;
 
   // Combined operations
   refreshAll: () => Promise<void>;
@@ -449,7 +450,7 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
 
   const acknowledgeCheckIn = async (
     checkInId: string,
-    confirmationCode: string
+    checkInCode: string
   ): Promise<ApiResponse<CheckIn>> => {
     if (!user?.id) {
       return { success: false, error: 'User not authenticated' };
@@ -457,7 +458,7 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
 
     try {
       setIsLoadingCheckIns(true);
-      const response = await api.acknowledgeCheckIn(user.id, checkInId, confirmationCode);
+      const response = await api.acknowledgeCheckIn(user.id, checkInId, checkInCode);
 
       if (response.success && response.data) {
         // Update local state
@@ -554,6 +555,17 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
     await Promise.all([fetchUserContacts(), fetchUserCheckIns()]);
   };
 
+  // Escalation operations
+  const processEscalations = async () => {
+    try {
+      const response = await withTokenRefresh(() => api.processEscalations());
+      return response;
+    } catch (error) {
+      console.error('Error processing escalations:', error);
+      return { success: false, error: 'Failed to process escalations' };
+    }
+  };
+
   const value: BackendContextType = {
     isLoadingContacts,
     isLoadingCheckIns,
@@ -571,6 +583,7 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
     getCheckInById,
     confirmCheckIn,
     deleteCheckIn,
+    processEscalations,
     refreshAll,
   };
 

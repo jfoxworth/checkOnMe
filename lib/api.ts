@@ -135,6 +135,7 @@ export const api = {
       title?: string;
       description?: string;
       type?: string;
+      checkInCode?: string;
       scheduledTime: string;
       intervalMinutes: number;
       contacts: string[];
@@ -194,7 +195,7 @@ export const api = {
         scheduledTime: data.scheduledTime,
         responseDeadline,
         intervalMinutes: data.intervalMinutes,
-        confirmationCode: generate4DigitCode(),
+        checkInCode: data.checkInCode || generate4DigitCode(), // Use provided code or generate one
         contacts: data.contacts,
         customContacts: data.customContacts,
         companions: data.companions,
@@ -202,6 +203,9 @@ export const api = {
         startLocation: data.startLocation,
         createdAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
+        // GSI attributes for escalation queries
+        GSI1PK: 'scheduled', // Status for escalation index
+        GSI1SK: responseDeadline, // Response deadline for sorting
       };
 
       // Save check-in
@@ -227,7 +231,7 @@ export const api = {
   async acknowledgeCheckIn(
     userId: string,
     checkInId: string,
-    confirmationCode: string
+    checkInCode: string
   ): Promise<ApiResponse<CheckIn>> {
     try {
       // Get check-in
@@ -244,7 +248,7 @@ export const api = {
         return { success: false, error: 'Check-in is not in scheduled status' };
       }
 
-      if (checkIn.confirmationCode !== confirmationCode) {
+      if (checkIn.checkInCode !== checkInCode) {
         return { success: false, error: 'Invalid confirmation code' };
       }
 
@@ -254,6 +258,9 @@ export const api = {
         status: 'acknowledged' as const,
         acknowledgedAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
+        // Update GSI attributes to remove from escalation queries
+        GSI1PK: 'acknowledged',
+        GSI1SK: checkIn.responseDeadline, // Keep the same sort key
       };
 
       await dynamoService.putItem(TABLE_NAMES.MAIN, updatedCheckIn);
@@ -292,9 +299,9 @@ export const api = {
       const items = await dynamoService.queryGSI<CheckIn>(
         TABLE_NAMES.MAIN,
         'EscalationIndex',
-        '#status = :status AND responseDeadline <= :now',
+        'GSI1PK = :status AND GSI1SK <= :now',
         { ':status': 'scheduled', ':now': getCurrentTimestamp() },
-        { '#status': 'status' }
+        {}
       );
 
       const escalationQueries: EscalationQuery[] = items.map((checkIn) => ({
@@ -302,7 +309,7 @@ export const api = {
         checkInId: checkIn.id,
         scheduledTime: checkIn.scheduledTime,
         responseDeadline: checkIn.responseDeadline,
-        confirmationCode: checkIn.confirmationCode,
+        checkInCode: checkIn.checkInCode,
         contacts: checkIn.contacts,
       }));
 
@@ -331,6 +338,9 @@ export const api = {
         status: 'escalated' as const,
         escalatedAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
+        // Update GSI attributes
+        GSI1PK: 'escalated',
+        GSI1SK: checkIn.responseDeadline, // Keep the same sort key
       };
 
       await dynamoService.putItem(TABLE_NAMES.MAIN, updatedCheckIn);
@@ -339,6 +349,70 @@ export const api = {
     } catch (error) {
       console.error('Escalate check-in error:', error);
       return { success: false, error: 'Failed to escalate check-in' };
+    }
+  },
+
+  // Escalation workflow - to be called by Lambda
+  async processEscalations(): Promise<
+    ApiResponse<{ processed: number; escalated: EscalationQuery[] }>
+  > {
+    try {
+      console.log('🚨 Starting escalation process...');
+
+      // Get all check-ins that need escalation
+      const escalationResponse = await this.getCheckInsForEscalation();
+
+      if (!escalationResponse.success || !escalationResponse.data) {
+        return { success: false, error: 'Failed to get escalation queries' };
+      }
+
+      const escalationQueries = escalationResponse.data;
+      console.log(`📋 Found ${escalationQueries.length} check-ins needing escalation`);
+
+      // Process each escalation
+      const processedEscalations: EscalationQuery[] = [];
+
+      for (const query of escalationQueries) {
+        try {
+          console.log(`⚠️ Processing escalation for check-in: ${query.checkInId}`);
+
+          // Mark as escalated
+          const escalateResponse = await this.escalateCheckIn(query.userId, query.checkInId);
+
+          if (escalateResponse.success) {
+            processedEscalations.push(query);
+            console.log(`✅ Escalated check-in: ${query.checkInId}`);
+
+            // Here you would trigger the actual notification to emergency contacts
+            // For now, we'll just log what would happen
+            console.log(`📧 Would notify contacts: ${query.contacts.join(', ')}`);
+            console.log(`🔐 Check-in code for reference: ${query.checkInCode}`);
+            console.log(`⏰ Response deadline was: ${query.responseDeadline}`);
+          } else {
+            console.error(
+              `❌ Failed to escalate check-in ${query.checkInId}:`,
+              escalateResponse.error
+            );
+          }
+        } catch (error) {
+          console.error(`❌ Error processing escalation for ${query.checkInId}:`, error);
+        }
+      }
+
+      console.log(
+        `🎯 Escalation process complete. Processed ${processedEscalations.length}/${escalationQueries.length} escalations`
+      );
+
+      return {
+        success: true,
+        data: {
+          processed: processedEscalations.length,
+          escalated: processedEscalations,
+        },
+      };
+    } catch (error) {
+      console.error('Process escalations error:', error);
+      return { success: false, error: 'Failed to process escalations' };
     }
   },
 
@@ -386,14 +460,14 @@ export const api = {
   async getCheckInById(userId: string, checkInId: string): Promise<ApiResponse<CheckIn>> {
     try {
       console.log('API: Getting check-in by ID:', checkInId);
-      
+
       const keys = createKeys.checkIn(userId, checkInId);
       const item = await dynamoService.getItem(TABLE_NAMES.MAIN, keys);
-      
+
       if (!item) {
         return { success: false, error: 'Check-in not found' };
       }
-      
+
       return { success: true, data: item as CheckIn };
     } catch (error) {
       console.error('Get check-in by ID error:', error);
@@ -405,11 +479,11 @@ export const api = {
   async confirmCheckIn(checkInId: string): Promise<ApiResponse<CheckIn>> {
     try {
       console.log('API: Confirming check-in:', checkInId);
-      
+
       // In a real implementation, you would need the userId
       // For now, let's use a mock approach similar to acknowledgeCheckIn
       // This should be updated to match your database structure
-      
+
       // Mock implementation - find and update the check-in
       // This would need to be replaced with actual database logic
       const updatedCheckIn = {
@@ -418,7 +492,7 @@ export const api = {
         acknowledgedAt: getCurrentTimestamp(),
         // Add other required CheckIn fields here
       };
-      
+
       return { success: true, data: updatedCheckIn as CheckIn };
     } catch (error) {
       console.error('API: Error confirming check-in:', error);
@@ -430,7 +504,7 @@ export const api = {
   async deleteCheckIn(checkInId: string): Promise<ApiResponse<void>> {
     try {
       console.log('API: Deleting check-in:', checkInId);
-      
+
       // In a real implementation, this would delete from the database
       // For now, this is a mock implementation
       console.log('Check-in deleted successfully');

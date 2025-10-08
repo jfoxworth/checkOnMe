@@ -354,7 +354,8 @@ const CreateCheckInScreen = () => {
         setFormData({
           title: existingCheckIn.title,
           type: existingCheckIn.type,
-          checkInCode: existingCheckIn.checkInCode || Math.floor(1000 + Math.random() * 9000).toString(), // Use existing code or generate new one
+          checkInCode:
+            existingCheckIn.checkInCode || Math.floor(1000 + Math.random() * 9000).toString(), // Use existing code or generate new one
           checkInDateTime: existingCheckIn.checkInDateTime,
           selectedContacts: existingCheckIn.selectedContacts,
           customContacts: existingCheckIn.customContacts,
@@ -378,7 +379,7 @@ const CreateCheckInScreen = () => {
     name: '',
     email: '',
     phone: '',
-    type: 'email',
+    type: 'both',
   });
 
   const [customContactErrors, setCustomContactErrors] = useState<{
@@ -671,7 +672,7 @@ const CreateCheckInScreen = () => {
           title: formData.title,
           description: `${formData.type} check-in`,
           type: formData.type as any,
-          // TODO: Add checkInCode to backend API: checkInCode: formData.checkInCode,
+          checkInCode: formData.checkInCode,
           scheduledTime: formData.checkInDateTime.toISOString(),
           intervalMinutes: 60, // Default 1 hour check-in window
           contacts: selectedContactIds,
@@ -707,7 +708,7 @@ const CreateCheckInScreen = () => {
             formData.checkInDateTime,
             formData.title
           );
-          
+
           if (notificationId) {
             console.log('Check-in alarm rescheduled after update:', notificationId);
           }
@@ -733,7 +734,7 @@ const CreateCheckInScreen = () => {
           title: formData.title,
           description: `${formData.type} check-in`,
           type: formData.type as any,
-          // TODO: Add checkInCode to backend API: checkInCode: formData.checkInCode,
+          checkInCode: formData.checkInCode,
           scheduledTime: formData.checkInDateTime.toISOString(),
           intervalMinutes: 60, // Default 1 hour check-in window
           contacts: selectedContactIds,
@@ -769,10 +770,21 @@ const CreateCheckInScreen = () => {
             formData.checkInDateTime,
             formData.title
           );
-          
+
           if (notificationId) {
             console.log('Check-in alarm scheduled:', notificationId);
-            // You might want to store the notificationId with the check-in for future cancellation
+
+            // Test notification disabled for now to avoid confusion
+            // TODO: Add a dedicated test button for debugging notifications
+            // if (__DEV__) {
+            //   await NotificationService.scheduleTestNotification(response.data.id, formData.title);
+            //   console.log('🧪 Test notification scheduled for 5 seconds');
+
+            //   // List all scheduled notifications for debugging
+            //   setTimeout(() => {
+            //     NotificationService.listScheduledNotifications();
+            //   }, 1000);
+            // }
           }
 
           Alert.alert('Success', 'Check-in created successfully!', [
@@ -827,8 +839,14 @@ const CreateCheckInScreen = () => {
                   setFormData((prev) => ({ ...prev, checkInCode: newCode }));
                 }}
                 className="flex-row items-center rounded-lg bg-blue-100 px-3 py-1 dark:bg-blue-900/20">
-                <Icon name="RefreshCw" size={16} className="mr-1 text-blue-600 dark:text-blue-400" />
-                <ThemedText className="text-sm text-blue-600 dark:text-blue-400">Generate New</ThemedText>
+                <Icon
+                  name="RefreshCw"
+                  size={16}
+                  className="mr-1 text-blue-600 dark:text-blue-400"
+                />
+                <ThemedText className="text-sm text-blue-600 dark:text-blue-400">
+                  Generate New
+                </ThemedText>
               </Pressable>
             </View>
             <View className="flex-row items-center space-x-3">
@@ -1105,9 +1123,19 @@ const CreateCheckInScreen = () => {
                   key={contact.id}
                   className="mt-2 rounded-lg border border-gray-300 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700">
                   <View className="flex-row items-center justify-between">
-                    <View>
+                    <View className="flex-1">
                       <ThemedText className="font-semibold">{contact.name}</ThemedText>
-                      <ThemedText className="text-sm text-gray-600">
+                      {contact.email && (
+                        <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                          📧 {contact.email}
+                        </ThemedText>
+                      )}
+                      {contact.phone && (
+                        <ThemedText className="text-sm text-gray-600 dark:text-gray-400">
+                          📱 {contact.phone}
+                        </ThemedText>
+                      )}
+                      <ThemedText className="text-xs text-gray-500 dark:text-gray-500">
                         Type: {contact.type.toUpperCase()}
                       </ThemedText>
                     </View>

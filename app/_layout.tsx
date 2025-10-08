@@ -13,7 +13,7 @@ import { BackendProvider } from '@/lib/contexts/BackendContext';
 import { AuthGuard } from '@/lib/contexts/AuthGuard';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import useThemedNavigation from './hooks/useThemedNavigation';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 import { initializeApp } from '@/lib/init';
 import { configureCognito } from '@/lib/aws-config';
 import * as Notifications from 'expo-notifications';
@@ -39,22 +39,46 @@ function ThemedLayout() {
       await initializeApp();
     };
 
-    // Listen for notification responses
+    // Listen for notification responses (when user taps on notification)
     const notificationSubscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const data = response.notification.request.content.data;
 
         if (data?.type === 'checkin_alarm' && data?.checkInId) {
-          // Navigate to challenge screen
-          router.push(`/screens/checkin-challenge?checkInId=${data.checkInId}`);
+          // Only navigate if this is a real notification response (user tapped it)
+          // Add a small delay to ensure the app is ready
+          setTimeout(() => {
+            router.push(`/screens/checkin-challenge?checkInId=${data.checkInId}`);
+          }, 100);
         }
       }
     );
+
+    // Listen for notifications received while app is in foreground
+    const foregroundSubscription = Notifications.addNotificationReceivedListener((notification) => {
+      const data = notification.request.content.data;
+
+      if (data?.type === 'checkin_alarm' && data?.checkInId) {
+        // Show alert for foreground notifications and navigate
+        Alert.alert(
+          '🚨 Check-in Required',
+          'Time to confirm your safety!',
+          [
+            {
+              text: 'Check In Now',
+              onPress: () => router.push(`/screens/checkin-challenge?checkInId=${data.checkInId}`),
+            },
+          ],
+          { cancelable: false }
+        );
+      }
+    });
 
     initialize().catch(console.error);
 
     return () => {
       notificationSubscription.remove();
+      foregroundSubscription.remove();
     };
   }, []);
 

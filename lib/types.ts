@@ -38,7 +38,7 @@ export interface CheckIn {
   acknowledgedAt?: string; // ISO string - when user confirmed safety
   escalatedAt?: string; // ISO string - when emergency contacts were notified
   createdAt: string;
-  
+
   // Security - 4-digit code for check-in verification
   checkInCode?: string; // 4-digit code user sets for check-in confirmation
   updatedAt: string;
@@ -79,9 +79,6 @@ export interface CheckIn {
   escalationContacts?: string[]; // Array of contact PKs
   escalationLevel?: number; // 0 = none, 1 = first reminder, 2 = emergency contacts, etc.
 
-  // User confirmation code
-  confirmationCode: string; // 4-digit code for user to enter
-
   // Settings
   checkInInterval?: number; // minutes
   gracePeriod?: number; // minutes after responseDeadline before escalation
@@ -92,6 +89,10 @@ export interface CheckIn {
     platform: string;
     version: string;
   };
+
+  // GSI attributes for escalation queries
+  GSI1PK?: string; // Status for escalation index (e.g., 'scheduled', 'acknowledged')
+  GSI1SK?: string; // Response deadline for sorting
 }
 export interface EmergencyContact {
   // DynamoDB Keys: PK = USER#{userId}, SK = CONTACT#{contactId}
@@ -160,7 +161,7 @@ export interface EscalationQuery {
   checkInId: string;
   scheduledTime: string;
   responseDeadline: string;
-  confirmationCode: string;
+  checkInCode: string;
   contacts: string[];
 }
 
@@ -182,7 +183,7 @@ export interface LocalCheckIn {
   title: string;
   scheduledTime: string;
   responseDeadline: string;
-  confirmationCode: string;
+  checkInCode: string;
   notificationId: string; // Local notification ID
   isActive: boolean;
   isSynced: boolean; // Whether it's been saved to backend
@@ -193,7 +194,7 @@ export interface NotificationPayload {
   checkInId: string;
   title: string;
   body: string;
-  confirmationCode: string;
+  checkInCode: string;
   responseDeadline: string;
 }
 

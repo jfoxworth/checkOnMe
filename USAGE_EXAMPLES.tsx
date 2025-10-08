@@ -10,6 +10,7 @@ import {
   useContacts,
   usePurchaseOptions,
 } from '@/lib/contexts/UserDataContext';
+import { useBackend } from '@/lib/contexts/BackendContext';
 import { api, billingService } from '@/lib/api';
 
 // Example 1: Simple component using individual hooks
@@ -73,7 +74,7 @@ export const CheckInsList = () => {
         <View key={checkIn.id}>
           <Text>Status: {checkIn.status}</Text>
           <Text>Scheduled: {new Date(checkIn.scheduledTime).toLocaleString()}</Text>
-          <Text>Code: {checkIn.confirmationCode}</Text>
+          <Text>Code: {checkIn.checkInCode}</Text>
         </View>
       ))}
     </View>
@@ -109,6 +110,47 @@ export const PurchaseCredits = () => {
           onPress={() => handlePurchase(option)}
         />
       ))}
+    </View>
+  );
+};
+
+// Example 5: Escalation Testing (Development/Testing only)
+export const EscalationTesting = () => {
+  const { processEscalations } = useBackend();
+
+  const testEscalation = async () => {
+    try {
+      console.log('🧪 Testing escalation process...');
+      const response = await processEscalations();
+
+      if (response.success) {
+        console.log('✅ Escalation test successful!');
+        console.log(`📊 Processed: ${response.data.processed} escalations`);
+        console.log('📋 Escalated check-ins:', response.data.escalated);
+
+        alert(
+          `✅ Escalation Test Complete!\n\nProcessed: ${response.data.processed} escalations\nSee console for details.`
+        );
+      } else {
+        console.error('❌ Escalation test failed:', response.error);
+        alert(`❌ Escalation Test Failed:\n${response.error}`);
+      }
+    } catch (error) {
+      console.error('❌ Escalation test error:', error);
+      alert(`❌ Escalation Test Error:\n${error}`);
+    }
+  };
+
+  return (
+    <View style={{ padding: 20, backgroundColor: '#fff3cd', marginVertical: 10 }}>
+      <Text style={{ fontWeight: 'bold', marginBottom: 10, color: '#856404' }}>
+        🧪 Escalation Testing (Dev Only)
+      </Text>
+      <Text style={{ marginBottom: 10, color: '#856404', fontSize: 12 }}>
+        This will check for check-ins past their response deadline and mark them as escalated. In
+        production, this would be called by a Lambda function every few minutes.
+      </Text>
+      <Button title="🚨 Test Escalation Process" onPress={testEscalation} />
     </View>
   );
 };

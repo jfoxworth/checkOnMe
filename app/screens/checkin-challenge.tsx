@@ -13,7 +13,7 @@ const CheckInChallengeScreen = () => {
   const [attemptsLeft, setAttemptsLeft] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [checkIn, setCheckIn] = useState<any>(null);
-  const { getCheckInById, confirmCheckIn } = useBackend();
+  const { getCheckInById, acknowledgeCheckIn } = useBackend();
 
   useEffect(() => {
     loadCheckIn();
@@ -32,8 +32,21 @@ const CheckInChallengeScreen = () => {
   const loadCheckIn = async () => {
     try {
       if (checkInId) {
+        console.log('🔍 Loading check-in with ID:', checkInId);
         const result = await getCheckInById(checkInId);
+        console.log('📄 Loaded check-in:', result);
+        console.log('📄 Check-in object keys:', Object.keys(result || {}));
+        console.log('📄 Full check-in data:', JSON.stringify(result, null, 2));
         setCheckIn(result);
+
+        if (result?.checkInCode) {
+          console.log('🔐 Check-in code found:', result.checkInCode);
+          console.log('🔐 Check-in code type:', typeof result.checkInCode);
+          console.log('🔐 Check-in code length:', result.checkInCode?.length);
+        } else {
+          console.warn('⚠️ No check-in code found in loaded data');
+          console.log('⚠️ Available fields:', Object.keys(result || {}));
+        }
       }
     } catch (error) {
       console.error('Failed to load check-in:', error);
@@ -50,11 +63,15 @@ const CheckInChallengeScreen = () => {
     setIsLoading(true);
 
     try {
-      // Check if the code matches
-      if (enteredCode === checkIn?.checkInCode) {
-        // Success! Send confirmation to backend
-        await confirmCheckIn(checkInId);
+      console.log('🔐 Code verification attempt:');
+      console.log('   Entered code:', enteredCode);
+      console.log('   Expected code:', checkIn?.checkInCode);
 
+      // Send code to backend for verification
+      const response = await acknowledgeCheckIn(checkInId, enteredCode);
+
+      if (response.success) {
+        console.log('✅ Code verified successfully!');
         Alert.alert(
           'Check-in Successful! ✅',
           'You have successfully confirmed your safety. Your emergency contacts will not be notified.',
@@ -66,6 +83,7 @@ const CheckInChallengeScreen = () => {
           ]
         );
       } else {
+        console.log('❌ Code verification failed:', response.error);
         // Wrong code
         const newAttemptsLeft = attemptsLeft - 1;
         setAttemptsLeft(newAttemptsLeft);
@@ -146,12 +164,14 @@ const CheckInChallengeScreen = () => {
           <TextInput
             value={enteredCode}
             onChangeText={(text) => setEnteredCode(formatCode(text))}
+            onSubmitEditing={handleCodeSubmit}
             placeholder="1234"
             keyboardType="numeric"
             maxLength={4}
             className="mb-4 rounded-lg border border-gray-300 bg-white p-4 text-center font-mono text-2xl tracking-widest dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             autoFocus
             selectTextOnFocus
+            returnKeyType="done"
           />
 
           <View className="mb-4 flex-row items-center justify-center">
@@ -161,11 +181,18 @@ const CheckInChallengeScreen = () => {
             </ThemedText>
           </View>
 
+          {enteredCode.length < 4 && (
+            <ThemedText className="mb-2 text-center text-sm text-gray-500 dark:text-gray-400">
+              Enter all 4 digits to activate verification button
+            </ThemedText>
+          )}
+
           <Button
             title={isLoading ? 'Verifying...' : 'Confirm Safety'}
             onPress={handleCodeSubmit}
             disabled={enteredCode.length !== 4 || isLoading}
-            className="w-full"
+            className="w-full bg-green-600 hover:bg-green-700"
+            size="large"
           />
         </View>
 
