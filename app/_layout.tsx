@@ -16,6 +16,8 @@ import useThemedNavigation from './hooks/useThemedNavigation';
 import { Platform } from 'react-native';
 import { initializeApp } from '@/lib/init';
 import { configureCognito } from '@/lib/aws-config';
+import * as Notifications from 'expo-notifications';
+import { router } from 'expo-router';
 
 NativeWindStyleSheet.setOutput({
   default: 'native',
@@ -37,7 +39,23 @@ function ThemedLayout() {
       await initializeApp();
     };
 
+    // Listen for notification responses
+    const notificationSubscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
+
+        if (data?.type === 'checkin_alarm' && data?.checkInId) {
+          // Navigate to challenge screen
+          router.push(`/screens/checkin-challenge?checkInId=${data.checkInId}`);
+        }
+      }
+    );
+
     initialize().catch(console.error);
+
+    return () => {
+      notificationSubscription.remove();
+    };
   }, []);
 
   return (

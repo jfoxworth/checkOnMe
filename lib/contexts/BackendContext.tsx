@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { api } from '../api';
 import { useAuth } from './AuthContext';
 import { Contact, CheckIn, ApiResponse } from '../types';
+import { NotificationService } from '../notifications';
 
 // Types for backend integration
 export interface CreateContactData {
@@ -74,6 +75,9 @@ interface BackendContextType {
     checkInId: string,
     confirmationCode: string
   ) => Promise<ApiResponse<CheckIn>>;
+  getCheckInById: (checkInId: string) => Promise<CheckIn | null>;
+  confirmCheckIn: (checkInId: string) => Promise<ApiResponse<CheckIn>>;
+  deleteCheckIn: (checkInId: string) => Promise<ApiResponse<void>>;
 
   // Combined operations
   refreshAll: () => Promise<void>;
@@ -469,6 +473,82 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
     }
   };
 
+  const getCheckInById = async (checkInId: string): Promise<CheckIn | null> => {
+    // First try to find in local state
+    const localCheckIn = userCheckIns.find((c) => c.id === checkInId);
+    if (localCheckIn) {
+      return localCheckIn;
+    }
+
+    // If not found locally, fetch from API
+    if (!user?.id) {
+      return null;
+    }
+
+    try {
+      const response = await withTokenRefresh(() => api.getCheckInById(user.id!, checkInId));
+      return response.success ? response.data : null;
+    } catch (error) {
+      console.error('Error fetching check-in:', error);
+      return null;
+    }
+  };
+
+  const confirmCheckIn = async (checkInId: string): Promise<ApiResponse<CheckIn>> => {
+    if (!user?.id) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      setIsLoadingCheckIns(true);
+      const response = await withTokenRefresh(() => api.confirmCheckIn(checkInId));
+
+      if (response.success && response.data) {
+        // Update local state
+        setUserCheckIns((prev) => prev.map((c) => (c.id === checkInId ? response.data! : c)));
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error confirming check-in:', error);
+      return { success: false, error: 'Failed to confirm check-in' };
+    } finally {
+      setIsLoadingCheckIns(false);
+    }
+  };
+
+  const deleteCheckIn = async (checkInId: string): Promise<ApiResponse<void>> => {
+    if (!user?.id) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      setIsLoadingCheckIns(true);
+
+      // Cancel any scheduled alarms for this check-in
+      // Since we don't store notification IDs yet, we'll cancel all and reschedule others
+      await NotificationService.cancelAllCheckInAlarms();
+
+      const response = await withTokenRefresh(() => api.deleteCheckIn(checkInId));
+
+      if (response.success) {
+        // Update local state
+        setUserCheckIns((prev) => prev.filter((c) => c.id !== checkInId));
+
+        // Reschedule alarms for remaining check-ins
+        const remainingCheckIns = userCheckIns.filter((c) => c.id !== checkInId);
+        await NotificationService.rescheduleActiveCheckIns(remainingCheckIns);
+      }
+
+      return { success: response.success, error: response.error };
+    } catch (error) {
+      console.error('Error deleting check-in:', error);
+      return { success: false, error: 'Failed to delete check-in' };
+    } finally {
+      setIsLoadingCheckIns(false);
+    }
+  };
+
   // Combined operations
   const refreshAll = async (): Promise<void> => {
     await Promise.all([fetchUserContacts(), fetchUserCheckIns()]);
@@ -488,6 +568,9 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
     fetchUserCheckIns,
     updateCheckInStatus,
     acknowledgeCheckIn,
+    getCheckInById,
+    confirmCheckIn,
+    deleteCheckIn,
     refreshAll,
   };
 

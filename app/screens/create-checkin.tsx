@@ -8,6 +8,7 @@ import Header from '@/components/Header';
 import { Chip } from '@/components/Chip';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useBackend } from '@/lib/contexts/BackendContext';
+import { NotificationService } from '@/lib/notifications';
 
 // Types
 interface Contact {
@@ -659,6 +660,12 @@ const CreateCheckInScreen = () => {
       console.log('CUSTOM CONTACTS BEING SENT TO BACKEND:', customContactsForCheckIn);
 
       if (isEditing) {
+        // Cancel existing alarms before updating
+        // TODO: In a production app, we would store the specific notificationId with each check-in
+        // For now, we'll cancel all check-in alarms and reschedule them
+        console.log('Cancelling existing alarms before updating check-in...');
+        await NotificationService.cancelAllCheckInAlarms();
+
         // Prepare check-in data for backend
         const response = await updateCheckIn(editingId, {
           title: formData.title,
@@ -694,7 +701,27 @@ const CreateCheckInScreen = () => {
         });
 
         if (response.success) {
-          Alert.alert('Success', 'Check-in updated successfully!', [
+          // Schedule new alarm for the updated check-in
+          const notificationId = await NotificationService.scheduleCheckInAlarm(
+            editingId,
+            formData.checkInDateTime,
+            formData.title
+          );
+          
+          if (notificationId) {
+            console.log('Check-in alarm rescheduled after update:', notificationId);
+          }
+
+          // Re-schedule alarms for all other active check-ins
+          try {
+            console.log('Re-scheduling alarms for other active check-ins...');
+            await NotificationService.rescheduleActiveCheckIns(userCheckIns);
+          } catch (error) {
+            console.error('Error re-scheduling other check-ins:', error);
+            // Don't show error to user as the main update was successful
+          }
+
+          Alert.alert('Success', 'Check-in updated and alarm rescheduled successfully!', [
             { text: 'OK', onPress: () => router.back() },
           ]);
         } else {
@@ -735,7 +762,19 @@ const CreateCheckInScreen = () => {
               : undefined,
         });
 
-        if (response.success) {
+        if (response.success && response.data) {
+          // Schedule the check-in alarm
+          const notificationId = await NotificationService.scheduleCheckInAlarm(
+            response.data.id,
+            formData.checkInDateTime,
+            formData.title
+          );
+          
+          if (notificationId) {
+            console.log('Check-in alarm scheduled:', notificationId);
+            // You might want to store the notificationId with the check-in for future cancellation
+          }
+
           Alert.alert('Success', 'Check-in created successfully!', [
             { text: 'OK', onPress: () => router.back() },
           ]);
