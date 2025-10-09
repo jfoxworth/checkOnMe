@@ -10,6 +10,43 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useBackend } from '@/lib/contexts/BackendContext';
 import { NotificationService } from '@/lib/notifications';
 
+// Utility functions for 30-minute time handling
+const roundToNext30Minutes = (date: Date): Date => {
+  const rounded = new Date(date);
+  const minutes = rounded.getMinutes();
+
+  if (minutes === 0 || minutes === 30) {
+    return rounded; // Already on 30-minute boundary
+  } else if (minutes < 30) {
+    rounded.setMinutes(30, 0, 0); // Round to next half hour
+  } else {
+    rounded.setMinutes(0, 0, 0); // Round to next hour
+    rounded.setHours(rounded.getHours() + 1);
+  }
+
+  return rounded;
+};
+
+const formatTimeSlots = (date: Date): string[] => {
+  const slots: string[] = [];
+  const today = new Date(date);
+  today.setHours(0, 0, 0, 0);
+
+  // Generate 48 slots (24 hours * 2 = 30-minute increments)
+  for (let i = 0; i < 48; i++) {
+    const slot = new Date(today.getTime() + i * 30 * 60 * 1000);
+    slots.push(
+      slot.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      })
+    );
+  }
+
+  return slots;
+};
+
 // Types
 interface Contact {
   id: number;
@@ -52,7 +89,9 @@ interface FormData {
   title: string;
   type: string;
   checkInCode: string;
-  checkInDateTime: Date;
+  notificationMethod: 'alarm' | 'sms'; // Either phone alarm OR SMS, not both
+  checkInDateTime: Date; // When to send the notification
+  escalationDateTime: Date; // When to escalate if not acknowledged
   selectedContacts: SelectedContact[];
   customContacts: CustomContact[];
   locations: Location[];
@@ -222,19 +261,27 @@ const CreateCheckInScreen = () => {
   }, [userContactsFormatted]);
 
   // Memoize initial form data to prevent unnecessary re-renders
-  const initialFormData = useMemo(
-    () => ({
+  const initialFormData = useMemo(() => {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    // Round to next 30-minute increment
+    const checkInTime = roundToNext30Minutes(tomorrow);
+    const escalationTime = new Date(checkInTime.getTime() + 60 * 60 * 1000); // 1 hour later
+
+    return {
       title: '',
       type: '',
       checkInCode: Math.floor(1000 + Math.random() * 9000).toString(), // Generate random 4-digit code
-      checkInDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Default to tomorrow
+      notificationMethod: 'alarm' as const, // Default to phone alarm
+      checkInDateTime: checkInTime,
+      escalationDateTime: escalationTime,
       selectedContacts: [],
       customContacts: [],
       locations: [{ id: 1, name: '', address: '', dateTime: new Date() }],
       companions: [{ id: 1, name: '', email: '', phone: '', socialMedia: '' }],
-    }),
-    []
-  );
+    };
+  }, []);
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
@@ -351,12 +398,19 @@ const CreateCheckInScreen = () => {
       }
 
       if (existingCheckIn) {
+        const checkInTime = new Date(existingCheckIn.checkInDateTime);
+        const escalationTime = existingCheckIn.escalationDateTime
+          ? new Date(existingCheckIn.escalationDateTime)
+          : new Date(checkInTime.getTime() + 60 * 60 * 1000); // Default 1 hour later
+
         setFormData({
           title: existingCheckIn.title,
           type: existingCheckIn.type,
           checkInCode:
             existingCheckIn.checkInCode || Math.floor(1000 + Math.random() * 9000).toString(), // Use existing code or generate new one
-          checkInDateTime: existingCheckIn.checkInDateTime,
+          notificationMethod: existingCheckIn.notificationMethod || 'alarm', // Default to alarm if not set
+          checkInDateTime: checkInTime,
+          escalationDateTime: escalationTime,
           selectedContacts: existingCheckIn.selectedContacts,
           customContacts: existingCheckIn.customContacts,
           locations: existingCheckIn.locations,
@@ -606,10 +660,42 @@ const CreateCheckInScreen = () => {
       Alert.alert('Error', 'Please select a check-in type');
       return false;
     }
+    if (!formData.notificationMethod) {
+      Alert.alert('Error', 'Please select a notification method');
+      return false;
+    }
+
+    // Validate timing
+    const now = new Date();
+    if (formData.checkInDateTime <= now) {
+      Alert.alert('Error', 'Check-in time must be in the future');
+      return false;
+    }
+
+    if (formData.escalationDateTime <= formData.checkInDateTime) {
+      Alert.alert('Error', 'Escalation time must be after the check-in time');
+      return false;
+    }
+
+    // Validate 30-minute increments
+    const checkInMinutes = formData.checkInDateTime.getMinutes();
+    const escalationMinutes = formData.escalationDateTime.getMinutes();
+
+    if (checkInMinutes !== 0 && checkInMinutes !== 30) {
+      Alert.alert('Error', 'Check-in time must be on the hour (:00) or half hour (:30)');
+      return false;
+    }
+
+    if (escalationMinutes !== 0 && escalationMinutes !== 30) {
+      Alert.alert('Error', 'Escalation time must be on the hour (:00) or half hour (:30)');
+      return false;
+    }
+
     if (formData.selectedContacts.length === 0 && formData.customContacts.length === 0) {
       Alert.alert('Error', 'Please select at least one emergency contact');
       return false;
     }
+
     return true;
   };
 
@@ -673,8 +759,13 @@ const CreateCheckInScreen = () => {
           description: `${formData.type} check-in`,
           type: formData.type as any,
           checkInCode: formData.checkInCode,
+          notificationMethod: formData.notificationMethod,
           scheduledTime: formData.checkInDateTime.toISOString(),
-          intervalMinutes: 60, // Default 1 hour check-in window
+          escalationTime: formData.escalationDateTime.toISOString(),
+          intervalMinutes: Math.round(
+            (formData.escalationDateTime.getTime() - formData.checkInDateTime.getTime()) /
+              (1000 * 60)
+          ),
           contacts: selectedContactIds,
           customContacts: customContactsForCheckIn,
           companions: formData.companions
@@ -702,15 +793,17 @@ const CreateCheckInScreen = () => {
         });
 
         if (response.success) {
-          // Schedule new alarm for the updated check-in
-          const notificationId = await NotificationService.scheduleCheckInAlarm(
-            editingId,
-            formData.checkInDateTime,
-            formData.title
-          );
-
-          if (notificationId) {
-            console.log('Check-in alarm rescheduled after update:', notificationId);
+          // Schedule notification based on method
+          if (formData.notificationMethod === 'alarm') {
+            const notificationId = await NotificationService.scheduleCheckInAlarm(
+              editingId,
+              formData.checkInDateTime,
+              formData.title
+            );
+            console.log('Phone alarm rescheduled:', notificationId);
+          } else {
+            // TODO: Schedule SMS notification
+            console.log('SMS notification would be scheduled here for update');
           }
 
           // Re-schedule alarms for all other active check-ins
@@ -735,8 +828,13 @@ const CreateCheckInScreen = () => {
           description: `${formData.type} check-in`,
           type: formData.type as any,
           checkInCode: formData.checkInCode,
+          notificationMethod: formData.notificationMethod,
           scheduledTime: formData.checkInDateTime.toISOString(),
-          intervalMinutes: 60, // Default 1 hour check-in window
+          escalationTime: formData.escalationDateTime.toISOString(),
+          intervalMinutes: Math.round(
+            (formData.escalationDateTime.getTime() - formData.checkInDateTime.getTime()) /
+              (1000 * 60)
+          ),
           contacts: selectedContactIds,
           customContacts: customContactsForCheckIn,
           companions: formData.companions
@@ -764,27 +862,17 @@ const CreateCheckInScreen = () => {
         });
 
         if (response.success && response.data) {
-          // Schedule the check-in alarm
-          const notificationId = await NotificationService.scheduleCheckInAlarm(
-            response.data.id,
-            formData.checkInDateTime,
-            formData.title
-          );
-
-          if (notificationId) {
-            console.log('Check-in alarm scheduled:', notificationId);
-
-            // Test notification disabled for now to avoid confusion
-            // TODO: Add a dedicated test button for debugging notifications
-            // if (__DEV__) {
-            //   await NotificationService.scheduleTestNotification(response.data.id, formData.title);
-            //   console.log('🧪 Test notification scheduled for 5 seconds');
-
-            //   // List all scheduled notifications for debugging
-            //   setTimeout(() => {
-            //     NotificationService.listScheduledNotifications();
-            //   }, 1000);
-            // }
+          // Schedule notification based on method
+          if (formData.notificationMethod === 'alarm') {
+            const notificationId = await NotificationService.scheduleCheckInAlarm(
+              response.data.id,
+              formData.checkInDateTime,
+              formData.title
+            );
+            console.log('Phone alarm scheduled:', notificationId);
+          } else {
+            // TODO: Schedule SMS notification
+            console.log('SMS notification would be scheduled here for creation');
           }
 
           Alert.alert('Success', 'Check-in created successfully!', [
@@ -872,6 +960,79 @@ const CreateCheckInScreen = () => {
             </ThemedText>
           </View>
 
+          {/* Notification Method */}
+          <View className="mb-6">
+            <ThemedText className="mb-3 text-lg font-bold">Notification Method</ThemedText>
+            <ThemedText className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+              Choose how you want to be notified when it's time to check in
+            </ThemedText>
+
+            <View className="gap-3">
+              {/* Phone Alarm Option */}
+              <Pressable
+                onPress={() => setFormData((prev) => ({ ...prev, notificationMethod: 'alarm' }))}
+                className={`rounded-lg border-2 p-4 ${
+                  formData.notificationMethod === 'alarm'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
+                }`}>
+                <View className="flex-row items-center">
+                  <View
+                    className={`mr-3 h-4 w-4 rounded-full border-2 ${
+                      formData.notificationMethod === 'alarm'
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-gray-400'
+                    }`}>
+                    {formData.notificationMethod === 'alarm' && (
+                      <View className="m-0.5 h-2 w-2 rounded-full bg-white" />
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <View className="flex-row items-center">
+                      <Icon name="Smartphone" size={20} className="mr-2 text-gray-600" />
+                      <ThemedText className="font-semibold">📱 Phone Alarm</ThemedText>
+                    </View>
+                    <ThemedText className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      Get a loud notification directly on your phone that requires the app to be
+                      opened
+                    </ThemedText>
+                  </View>
+                </View>
+              </Pressable>
+
+              {/* SMS Option */}
+              <Pressable
+                onPress={() => setFormData((prev) => ({ ...prev, notificationMethod: 'sms' }))}
+                className={`rounded-lg border-2 p-4 ${
+                  formData.notificationMethod === 'sms'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
+                }`}>
+                <View className="flex-row items-center">
+                  <View
+                    className={`mr-3 h-4 w-4 rounded-full border-2 ${
+                      formData.notificationMethod === 'sms'
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-gray-400'
+                    }`}>
+                    {formData.notificationMethod === 'sms' && (
+                      <View className="m-0.5 h-2 w-2 rounded-full bg-white" />
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <View className="flex-row items-center">
+                      <Icon name="MessageCircle" size={20} className="mr-2 text-gray-600" />
+                      <ThemedText className="font-semibold">💬 SMS Text Message</ThemedText>
+                    </View>
+                    <ThemedText className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      Receive a text message with a link to verify your safety online or in the app
+                    </ThemedText>
+                  </View>
+                </View>
+              </Pressable>
+            </View>
+          </View>
+
           {/* Type Selection */}
           <View className="mb-6">
             <ThemedText className="mb-3 text-lg font-bold">Check-in Type</ThemedText>
@@ -889,41 +1050,140 @@ const CreateCheckInScreen = () => {
             </View>
           </View>
 
-          {/* Check-in Date & Time */}
+          {/* Check-in & Escalation Timing */}
           <View className="mb-6">
-            <ThemedText className="mb-2 text-lg font-bold">Check-in Date & Time</ThemedText>
-            <View className="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
-              <View className="flex-row gap-3">
+            <ThemedText className="mb-3 text-lg font-bold">Check-in Timing</ThemedText>
+
+            {/* Check-in Date */}
+            <View className="mb-4">
+              <ThemedText className="mb-2 text-base font-semibold">
+                {formData.notificationMethod === 'alarm'
+                  ? '📱 Phone Alarm Date'
+                  : '💬 SMS Send Date'}
+              </ThemedText>
+              <Pressable
+                onPress={() => setShowDatePicker(true)}
+                className="rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-600 dark:bg-gray-800">
+                <ThemedText className="text-center text-base">
+                  {formData.checkInDateTime.toLocaleDateString()}
+                </ThemedText>
+              </Pressable>
+            </View>
+
+            {/* Check-in Time (30-minute increments) */}
+            <View className="mb-4">
+              <ThemedText className="mb-2 text-base font-semibold">
+                {formData.notificationMethod === 'alarm' ? '📱 Alarm Time' : '💬 SMS Send Time'}
+              </ThemedText>
+              <View className="flex-row gap-2">
+                {/* Hour Selection */}
                 <View className="flex-1">
-                  <ThemedText className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Date
-                  </ThemedText>
-                  <Pressable
-                    onPress={() => setShowDatePicker(true)}
-                    className="rounded-lg border border-gray-300 bg-gray-50 px-3 py-3 dark:border-gray-600 dark:bg-gray-700">
-                    <ThemedText className="text-center text-base">
-                      {formData.checkInDateTime.toLocaleDateString()}
-                    </ThemedText>
-                  </Pressable>
-                </View>
-                <View className="flex-1">
-                  <ThemedText className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Time
+                  <ThemedText className="mb-1 text-sm text-gray-600 dark:text-gray-400">
+                    Hour
                   </ThemedText>
                   <Pressable
                     onPress={() => setShowTimePicker(true)}
-                    className="rounded-lg border border-gray-300 bg-gray-50 px-3 py-3 dark:border-gray-600 dark:bg-gray-700">
-                    <ThemedText className="text-center text-base">
-                      {formData.checkInDateTime.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                    className="rounded-lg border border-gray-300 bg-white p-3 dark:border-gray-600 dark:bg-gray-800">
+                    <ThemedText className="text-center">
+                      {formData.checkInDateTime.getHours().toString().padStart(2, '0')}
                     </ThemedText>
                   </Pressable>
+                </View>
+
+                {/* Minute Selection (only :00 or :30) */}
+                <View className="flex-1">
+                  <ThemedText className="mb-1 text-sm text-gray-600 dark:text-gray-400">
+                    Minutes
+                  </ThemedText>
+                  <View className="flex-row gap-1">
+                    <Pressable
+                      onPress={() => {
+                        const newTime = new Date(formData.checkInDateTime);
+                        newTime.setMinutes(0, 0, 0);
+                        setFormData((prev) => ({ ...prev, checkInDateTime: newTime }));
+                      }}
+                      className={`flex-1 rounded-lg border p-2 ${
+                        formData.checkInDateTime.getMinutes() === 0
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
+                      }`}>
+                      <ThemedText className="text-center text-sm">:00</ThemedText>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        const newTime = new Date(formData.checkInDateTime);
+                        newTime.setMinutes(30, 0, 0);
+                        setFormData((prev) => ({ ...prev, checkInDateTime: newTime }));
+                      }}
+                      className={`flex-1 rounded-lg border p-2 ${
+                        formData.checkInDateTime.getMinutes() === 30
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
+                      }`}>
+                      <ThemedText className="text-center text-sm">:30</ThemedText>
+                    </Pressable>
+                  </View>
                 </View>
               </View>
             </View>
 
+            {/* Escalation Timing */}
+            <View className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
+              <View className="mb-3 flex-row items-center">
+                <Icon name="AlertTriangle" size={20} className="mr-2 text-yellow-600" />
+                <ThemedText className="font-semibold text-yellow-800 dark:text-yellow-200">
+                  Escalation Deadline
+                </ThemedText>
+              </View>
+
+              <ThemedText className="mb-3 text-sm text-yellow-700 dark:text-yellow-300">
+                If you don't confirm your safety by this time, your emergency contacts will be
+                notified
+              </ThemedText>
+
+              <View className="flex-row items-center gap-3">
+                <ThemedText className="text-sm font-medium">Escalate at:</ThemedText>
+
+                {/* Quick Escalation Time Buttons */}
+                <View className="flex-1 flex-row gap-1">
+                  {[30, 60, 90, 120].map((minutes) => (
+                    <Pressable
+                      key={minutes}
+                      onPress={() => {
+                        const escalationTime = new Date(
+                          formData.checkInDateTime.getTime() + minutes * 60 * 1000
+                        );
+                        // Round to next 30-minute boundary
+                        const rounded = roundToNext30Minutes(escalationTime);
+                        setFormData((prev) => ({ ...prev, escalationDateTime: rounded }));
+                      }}
+                      className={`flex-1 rounded border px-2 py-1 ${
+                        Math.abs(
+                          formData.escalationDateTime.getTime() - formData.checkInDateTime.getTime()
+                        ) ===
+                        minutes * 60 * 1000
+                          ? 'border-yellow-500 bg-yellow-100 dark:bg-yellow-800'
+                          : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-700'
+                      }`}>
+                      <ThemedText className="text-center text-xs">+{minutes}m</ThemedText>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              <View className="mt-2 rounded bg-white p-2 dark:bg-gray-800">
+                <ThemedText className="text-center text-sm font-medium">
+                  📅 {formData.escalationDateTime.toLocaleDateString()} at 🕐{' '}
+                  {formData.escalationDateTime.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  })}
+                </ThemedText>
+              </View>
+            </View>
+
+            {/* Date/Time Pickers */}
             {showDatePicker && (
               <DateTimePicker
                 value={formData.checkInDateTime}
@@ -950,11 +1210,12 @@ const CreateCheckInScreen = () => {
                 onChange={(event, selectedTime) => {
                   setShowTimePicker(false);
                   if (selectedTime) {
-                    // Preserve the current date when changing time
+                    // Preserve the current date when changing time, but round to 30-minute increments
                     const newDateTime = new Date(formData.checkInDateTime);
                     newDateTime.setHours(selectedTime.getHours());
                     newDateTime.setMinutes(selectedTime.getMinutes());
-                    setFormData((prev) => ({ ...prev, checkInDateTime: newDateTime }));
+                    const rounded = roundToNext30Minutes(newDateTime);
+                    setFormData((prev) => ({ ...prev, checkInDateTime: rounded }));
                   }
                 }}
               />

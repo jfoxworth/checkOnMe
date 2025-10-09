@@ -35,6 +35,8 @@ export interface CreateCheckInData {
     address?: string;
     name?: string;
   };
+  notificationMethod?: 'alarm' | 'sms'; // How user wants to be notified
+  escalationTime?: string; // When to escalate if not acknowledged (ISO string)
 }
 
 // Context interface

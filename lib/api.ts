@@ -136,7 +136,9 @@ export const api = {
       description?: string;
       type?: string;
       checkInCode?: string;
+      notificationMethod?: 'alarm' | 'sms';
       scheduledTime: string;
+      escalationTime?: string;
       intervalMinutes: number;
       contacts: string[];
       customContacts?: Array<{ name: string; email: string; phone: string; type: string }>;
@@ -180,9 +182,13 @@ export const api = {
 
       // Create check-in
       const checkInId = generateId();
-      const responseDeadline = new Date(
-        new Date(data.scheduledTime).getTime() + data.intervalMinutes * 60 * 1000
-      ).toISOString();
+
+      // Use escalationTime if provided, otherwise calculate from intervalMinutes
+      const responseDeadline =
+        data.escalationTime ||
+        new Date(
+          new Date(data.scheduledTime).getTime() + data.intervalMinutes * 60 * 1000
+        ).toISOString();
 
       const checkIn: CheckIn = {
         ...createKeys.checkIn(userId, checkInId),
@@ -196,6 +202,8 @@ export const api = {
         responseDeadline,
         intervalMinutes: data.intervalMinutes,
         checkInCode: data.checkInCode || generate4DigitCode(), // Use provided code or generate one
+        notificationMethod: data.notificationMethod || 'alarm', // Default to alarm
+        escalationTime: data.escalationTime, // Store the user-defined escalation time
         contacts: data.contacts,
         customContacts: data.customContacts,
         companions: data.companions,
@@ -203,9 +211,9 @@ export const api = {
         startLocation: data.startLocation,
         createdAt: getCurrentTimestamp(),
         updatedAt: getCurrentTimestamp(),
-        // GSI attributes for escalation queries
+        // GSI attributes for escalation queries - use escalationTime for more precise control
         GSI1PK: 'scheduled', // Status for escalation index
-        GSI1SK: responseDeadline, // Response deadline for sorting
+        GSI1SK: responseDeadline, // Use escalationTime (or calculated responseDeadline) for sorting
       };
 
       // Save check-in

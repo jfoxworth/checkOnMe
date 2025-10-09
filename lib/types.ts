@@ -84,6 +84,10 @@ export interface CheckIn {
   gracePeriod?: number; // minutes after responseDeadline before escalation
   autoCancel?: boolean;
 
+  // Notification settings
+  notificationMethod?: 'alarm' | 'sms'; // How user wants to be notified
+  escalationTime?: string; // When to escalate if not acknowledged (ISO string)
+
   // Metadata
   deviceInfo?: {
     platform: string;
