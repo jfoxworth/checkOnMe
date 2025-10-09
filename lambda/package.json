@@ -1,0 +1,51 @@
+{
+  "name": "checkonme-lambda",
+  "version": "1.0.0",
+  "description": "AWS Lambda functions for CheckOnMe safety app - escalation processing and SMS notifications",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:staging": "serverless deploy --stage staging",
+    "deploy:prod": "serverless deploy --stage prod",
+    "remove": "serverless remove",
+    "logs:escalation": "serverless logs -f processEscalations -t",
+    "logs:sms": "serverless logs -f sendSMSNotifications -t",
+    "logs:verify": "serverless logs -f verifySMSCheckIn -t",
+    "invoke:escalation": "serverless invoke -f processEscalations",
+    "invoke:sms": "serverless invoke -f sendSMSNotifications",
+    "test:escalation": "serverless invoke local -f processEscalations",
+    "test:sms": "serverless invoke local -f sendSMSNotifications",
+    "offline": "serverless offline",
+    "info": "serverless info",
+    "package": "serverless package"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1490.0"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.0"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "safety",
+    "check-in",
+    "escalation",
+    "sms",
+    "notifications",
+    "emergency",
+    "serverless"
+  ],
+  "author": "CheckOnMe",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jfoxworth/checkOnMe"
+  },
+  "bugs": {
+    "url": "https://github.com/jfoxworth/checkOnMe/issues"
+  },
+  "homepage": "https://checkonme.app"
+}

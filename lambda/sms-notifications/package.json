@@ -1,0 +1,21 @@
+{
+  "name": "checkonme-sms-notifications",
+  "version": "1.0.0",
+  "description": "Lambda function for sending SMS notifications and handling web verification",
+  "main": "handler.js",
+  "dependencies": {
+    "aws-sdk": "^2.1490.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "sms",
+    "notifications",
+    "safety"
+  ],
+  "author": "CheckOnMe",
+  "license": "ISC"
+}

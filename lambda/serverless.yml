@@ -1,0 +1,169 @@
+service: checkonme-lambda
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${env:AWS_REGION, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+
+  environment:
+    STAGE: ${self:provider.stage}
+    DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME, 'checkonme-${self:provider.stage}'}
+    EMAIL_TOPIC_ARN: ${env:EMAIL_TOPIC_ARN, ''}
+    JWT_SECRET: ${env:JWT_SECRET, 'change-this-in-production'}
+    WEB_VERIFICATION_URL: ${env:WEB_VERIFICATION_URL, 'https://checkonme.app/verify'}
+    API_BASE_URL: ${env:API_BASE_URL, 'https://api.checkonme.app'}
+    ENABLE_SMS: ${env:ENABLE_SMS, 'true'}
+    ENABLE_EMAIL: ${env:ENABLE_EMAIL, 'true'}
+    ENABLE_WEB_VERIFICATION: ${env:ENABLE_WEB_VERIFICATION, 'true'}
+    ENABLE_ESCALATION: ${env:ENABLE_ESCALATION, 'true'}
+
+  iamRoleStatements:
+    # DynamoDB permissions
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:Scan
+      Resource:
+        - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_NAME}
+        - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_NAME}/index/*
+
+    # SNS permissions for SMS and email
+    - Effect: Allow
+      Action:
+        - sns:Publish
+      Resource: '*'
+
+    # CloudWatch Logs permissions
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: 'arn:aws:logs:${self:provider.region}:*:*'
+
+functions:
+  # Escalation processing - runs every 30 minutes (twice hourly)
+  processEscalations:
+    handler: escalation/handler.processEscalations
+    timeout: 300 # 5 minutes
+    memorySize: 256
+    events:
+      - schedule:
+          rate: rate(30 minutes)
+          enabled: true
+          input:
+            source: 'escalation-cron'
+    environment:
+      FUNCTION_NAME: processEscalations
+
+  # SMS notifications - runs every 30 minutes (twice hourly)
+  sendSMSNotifications:
+    handler: sms-notifications/handler.sendScheduledSMS
+    timeout: 300 # 5 minutes
+    memorySize: 256
+    events:
+      - schedule:
+          rate: rate(30 minutes)
+          enabled: true
+          input:
+            source: 'sms-cron'
+    environment:
+      FUNCTION_NAME: sendSMSNotifications
+
+  # Web verification endpoint
+  verifySMSCheckIn:
+    handler: sms-notifications/verify.handler
+    timeout: 30
+    memorySize: 128
+    events:
+      - http:
+          path: verify/{checkInId}
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+      - http:
+          path: verify/{checkInId}
+          method: options
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - Authorization
+            allowCredentials: false
+    environment:
+      FUNCTION_NAME: verifySMSCheckIn
+
+  # Manual escalation trigger (for testing)
+  triggerEscalation:
+    handler: escalation/handler.processEscalations
+    timeout: 300
+    memorySize: 256
+    events:
+      - http:
+          path: admin/escalation/trigger
+          method: post
+          cors: true
+    environment:
+      FUNCTION_NAME: triggerEscalation
+
+# Custom resources and outputs
+resources:
+  Outputs:
+    EscalationFunctionArn:
+      Description: 'ARN of the escalation processing function'
+      Value:
+        Fn::GetAtt: [ProcessEscalationsLambdaFunction, Arn]
+      Export:
+        Name: ${self:provider.stage}-escalation-function-arn
+
+    SMSFunctionArn:
+      Description: 'ARN of the SMS notification function'
+      Value:
+        Fn::GetAtt: [SendSMSNotificationsLambdaFunction, Arn]
+      Export:
+        Name: ${self:provider.stage}-sms-function-arn
+
+    VerificationEndpoint:
+      Description: 'URL of the SMS verification endpoint'
+      Value:
+        Fn::Join:
+          - ''
+          - - 'https://'
+            - Ref: ApiGatewayRestApi
+            - '.execute-api.'
+            - ${self:provider.region}
+            - '.amazonaws.com/'
+            - ${self:provider.stage}
+            - '/verify'
+      Export:
+        Name: ${self:provider.stage}-verification-endpoint
+
+plugins:
+  - serverless-offline # For local development
+
+custom:
+  serverless-offline:
+    httpPort: 3001
+    lambdaPort: 3002
+    printOutput: true
+
+package:
+  exclude:
+    - node_modules/**
+    - .git/**
+    - .gitignore
+    - README.md
+    - package-lock.json
+  include:
+    - shared/**
+    - escalation/**
+    - sms-notifications/**

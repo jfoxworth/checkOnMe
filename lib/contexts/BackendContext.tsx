@@ -315,6 +315,8 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
         customContacts: checkInData.customContacts,
         companions: checkInData.companions,
         location: checkInData.location,
+        notificationMethod: checkInData.notificationMethod, // Pass notification method to API
+        escalationTime: checkInData.escalationTime, // Pass escalation time to API
       };
 
       const response = await withTokenRefresh(() => api.createCheckIn(user.id, backendCheckInData));
@@ -371,6 +373,8 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
         intervalMinutes: checkInData.intervalMinutes,
         contacts: checkInData.contacts, // Update contacts properly
         location: checkInData.location,
+        notificationMethod: checkInData.notificationMethod || existingCheckIn.notificationMethod,
+        escalationTime: checkInData.escalationTime || existingCheckIn.escalationTime,
         updatedAt: new Date().toISOString(),
       };
 
