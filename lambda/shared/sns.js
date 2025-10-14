@@ -2,7 +2,7 @@ const AWS = require('aws-sdk');
 
 // Initialize SNS client
 const sns = new AWS.SNS({
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: process.env.AWS_REGION || 'us-east-2',
 });
 
 /**
@@ -65,7 +65,7 @@ const smsHelpers = {
         };
       } else {
         // Direct email (requires SES setup)
-        params.TargetArn = `arn:aws:ses:${process.env.AWS_REGION || 'us-east-1'}:${process.env.AWS_ACCOUNT_ID}:identity/${email}`;
+        params.TargetArn = `arn:aws:ses:${process.env.AWS_REGION || 'us-east-2'}:${process.env.AWS_ACCOUNT_ID}:identity/${email}`;
       }
 
       const result = await sns.publish(params).promise();

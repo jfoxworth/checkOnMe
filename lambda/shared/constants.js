@@ -86,7 +86,7 @@ const FEATURES = {
 
 // AWS service configurations
 const AWS_CONFIG = {
-  REGION: process.env.AWS_REGION || 'us-east-1',
+  REGION: process.env.AWS_REGION || 'us-east-2',
   SNS_TOPIC_ARN: process.env.SNS_TOPIC_ARN,
   EMAIL_TOPIC_ARN: process.env.EMAIL_TOPIC_ARN,
   JWT_SECRET: process.env.JWT_SECRET || 'change-this-in-production',

@@ -11,7 +11,7 @@ import {
 
 // Environment configuration
 const AWS_CONFIG = {
-  region: process.env.EXPO_PUBLIC_AWS_REGION || 'us-east-1',
+  region: process.env.EXPO_PUBLIC_AWS_REGION || 'us-east-2',
   credentials: {
     accessKeyId: process.env.EXPO_PUBLIC_AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY || '',

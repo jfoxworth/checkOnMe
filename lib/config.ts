@@ -8,7 +8,7 @@ const getEnvVar = (key: string, fallback: string = ''): string => {
 export const CONFIG = {
   // AWS Configuration
   AWS: {
-    REGION: getEnvVar('EXPO_PUBLIC_AWS_REGION', 'us-east-1'),
+    REGION: getEnvVar('EXPO_PUBLIC_AWS_REGION', 'us-east-2'),
     ACCESS_KEY_ID: getEnvVar('EXPO_PUBLIC_AWS_ACCESS_KEY_ID'),
     SECRET_ACCESS_KEY: getEnvVar('EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY'),
   },

@@ -15,8 +15,8 @@ require('dotenv').config();
 
 // Configure Amplify
 const awsConfig = {
-  aws_project_region: process.env.EXPO_PUBLIC_AWS_REGION || 'us-east-1',
-  aws_cognito_region: process.env.EXPO_PUBLIC_AWS_REGION || 'us-east-1',
+  aws_project_region: process.env.EXPO_PUBLIC_AWS_REGION || 'us-east-2',
+  aws_cognito_region: process.env.EXPO_PUBLIC_AWS_REGION || 'us-east-2',
   aws_user_pools_id: process.env.EXPO_PUBLIC_AWS_USER_POOL_ID,
   aws_user_pools_web_client_id: process.env.EXPO_PUBLIC_AWS_USER_POOL_CLIENT_ID,
 };

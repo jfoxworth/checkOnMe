@@ -3,7 +3,7 @@
 This directory contains AWS Lambda functions for the CheckOnMe safety application that handle:
 
 1. **Escalation Processing** - Automatically escalates overdue check-ins
-2. **SMS Notifications** - Sends text message reminders for check-ins  
+2. **SMS Notifications** - Sends text message reminders for check-ins
 3. **Web Verification** - Handles check-in verification via SMS links
 
 ## 🏗️ Architecture
@@ -29,7 +29,7 @@ lambda/
 │   ├── handler.js          # Main escalation logic
 │   └── package.json        # Dependencies
 ├── sms-notifications/       # SMS notification Lambda
-│   ├── handler.js          # SMS sending logic  
+│   ├── handler.js          # SMS sending logic
 │   ├── verify.js           # Web verification endpoint
 │   └── package.json        # Dependencies
 ├── shared/                  # Shared utilities
@@ -59,11 +59,11 @@ Create a `.env` file in the lambda directory:
 
 ```bash
 # Required
-DYNAMODB_TABLE_NAME=checkonme-dev
-AWS_REGION=us-east-1
+DYNAMODB_TABLE_NAME=checkonme-main-dev
+AWS_REGION=us-east-2
 
 # Optional
-EMAIL_TOPIC_ARN=arn:aws:sns:us-east-1:123456789:email-notifications
+EMAIL_TOPIC_ARN=arn:aws:sns:us-east-2:123456789:email-notifications
 JWT_SECRET=your-secure-jwt-secret-here
 WEB_VERIFICATION_URL=https://checkonme.app/verify
 ENABLE_SMS=true
@@ -93,12 +93,14 @@ npm run deploy:prod
 **Trigger**: CloudWatch cron (every 5 minutes)
 
 **Process**:
+
 1. Query GSI1 for check-ins with status='scheduled' and deadline <= now
-2. Update status to 'escalated' 
+2. Update status to 'escalated'
 3. Send SMS/email alerts to emergency contacts
 4. Update GSI to remove from future queries
 
 **Manual Testing**:
+
 ```bash
 npm run invoke:escalation
 npm run logs:escalation
@@ -111,15 +113,17 @@ npm run logs:escalation
 **Trigger**: CloudWatch cron (every 1 minute)
 
 **Process**:
+
 1. Query GSI2 for SMS schedules with status='scheduled' and time <= now
 2. Generate secure verification links
 3. Send SMS with link and backup code
 4. Mark SMS as sent
 
 **Manual Testing**:
+
 ```bash
 npm run invoke:sms
-npm run logs:sms  
+npm run logs:sms
 ```
 
 ### 3. Web Verification (`verifySMSCheckIn`)
@@ -129,6 +133,7 @@ npm run logs:sms
 **Trigger**: HTTP POST to `/verify/{checkInId}`
 
 **Process**:
+
 1. Validate 4-digit code from request
 2. Find check-in by ID
 3. Mark as acknowledged if code matches
@@ -137,6 +142,7 @@ npm run logs:sms
 **Endpoint**: `POST https://api-id.execute-api.region.amazonaws.com/stage/verify/{checkInId}`
 
 **Request**:
+
 ```json
 {
   "code": "1234"
@@ -144,6 +150,7 @@ npm run logs:sms
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -161,12 +168,7 @@ The Lambda functions need these IAM permissions:
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "dynamodb:Query",
-        "dynamodb:GetItem", 
-        "dynamodb:UpdateItem",
-        "dynamodb:Scan"
-      ],
+      "Action": ["dynamodb:Query", "dynamodb:GetItem", "dynamodb:UpdateItem", "dynamodb:Scan"],
       "Resource": [
         "arn:aws:dynamodb:region:account:table/checkonme-*",
         "arn:aws:dynamodb:region:account:table/checkonme-*/index/*"
@@ -184,32 +186,34 @@ The Lambda functions need these IAM permissions:
 ## 📊 DynamoDB GSI Requirements
 
 ### GSI1 (Escalation Index)
-- **Partition Key**: `GSI1PK` (String) - Status ('scheduled', 'acknowledged', 'escalated')  
+
+- **Partition Key**: `GSI1PK` (String) - Status ('scheduled', 'acknowledged', 'escalated')
 - **Sort Key**: `GSI1SK` (String) - Escalation deadline (ISO timestamp)
 - **Purpose**: Find check-ins needing escalation
 
 ### GSI2 (SMS Schedule Index) - Optional for SMS feature
+
 - **Partition Key**: `GSI2PK` (String) - Type ('SMS_SCHEDULE')
-- **Sort Key**: `GSI2SK` (String) - Send time (ISO timestamp)  
+- **Sort Key**: `GSI2SK` (String) - Send time (ISO timestamp)
 - **Purpose**: Find SMS notifications to send
 
 ## 🔧 Configuration
 
 ### Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DYNAMODB_TABLE_NAME` | ✅ | - | Main DynamoDB table name |
-| `AWS_REGION` | ✅ | us-east-1 | AWS region |
-| `EMAIL_TOPIC_ARN` | ❌ | - | SNS topic for email notifications |
-| `JWT_SECRET` | ❌ | - | Secret for SMS link tokens |
-| `ENABLE_SMS` | ❌ | true | Enable SMS notifications |
-| `ENABLE_EMAIL` | ❌ | true | Enable email notifications |
+| Variable              | Required | Default   | Description                       |
+| --------------------- | -------- | --------- | --------------------------------- |
+| `DYNAMODB_TABLE_NAME` | ✅       | -         | Main DynamoDB table name          |
+| `AWS_REGION`          | ✅       | us-east-2 | AWS region                        |
+| `EMAIL_TOPIC_ARN`     | ❌       | -         | SNS topic for email notifications |
+| `JWT_SECRET`          | ❌       | -         | Secret for SMS link tokens        |
+| `ENABLE_SMS`          | ❌       | true      | Enable SMS notifications          |
+| `ENABLE_EMAIL`        | ❌       | true      | Enable email notifications        |
 
 ### Deployment Stages
 
 - **dev**: Development environment with debug logging
-- **staging**: Pre-production testing environment  
+- **staging**: Pre-production testing environment
 - **prod**: Production environment with optimized settings
 
 ## 📝 Monitoring & Logs
@@ -217,6 +221,7 @@ The Lambda functions need these IAM permissions:
 ### CloudWatch Logs
 
 Each function logs to separate log groups:
+
 - `/aws/lambda/checkonme-lambda-dev-processEscalations`
 - `/aws/lambda/checkonme-lambda-dev-sendSMSNotifications`
 - `/aws/lambda/checkonme-lambda-dev-verifySMSCheckIn`
@@ -247,7 +252,7 @@ aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/checkonme"
 # Test escalation function locally
 npm run test:escalation
 
-# Test SMS function locally  
+# Test SMS function locally
 npm run test:sms
 
 # Run offline API Gateway
@@ -266,14 +271,17 @@ npm run offline
 ### Common Issues
 
 1. **"Table not found"**
+
    - Verify `DYNAMODB_TABLE_NAME` environment variable
    - Ensure table exists in correct region
 
-2. **"GSI not found"** 
+2. **"GSI not found"**
+
    - Create GSI1 and GSI2 on your DynamoDB table
    - Wait for GSI to become ACTIVE
 
 3. **SMS delivery failures**
+
    - Verify phone numbers are in E.164 format (+1234567890)
    - Check SNS sending quotas and limits
    - Ensure origination number is configured
@@ -320,10 +328,10 @@ serverless deploy function -f processEscalations --stage dev
 For issues or questions:
 
 1. Check CloudWatch logs for error details
-2. Review this documentation  
+2. Review this documentation
 3. Open an issue on the GitHub repository
 4. Contact the development team
 
 ---
 
-*Last updated: October 8, 2025*
+_Last updated: October 8, 2025_

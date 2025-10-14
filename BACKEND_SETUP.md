@@ -62,7 +62,7 @@ aws dynamodb create-table \
   --key-schema \
     AttributeName=id,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST \
-  --region us-east-1
+   --region us-east-2
 ```
 
 ### 3. Environment Configuration
@@ -77,7 +77,7 @@ aws dynamodb create-table \
 
    ```env
    # AWS Configuration
-   EXPO_PUBLIC_AWS_REGION=us-east-1
+   EXPO_PUBLIC_AWS_REGION=us-east-2
    EXPO_PUBLIC_AWS_ACCESS_KEY_ID=your_access_key_here
    EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY=your_secret_key_here
 

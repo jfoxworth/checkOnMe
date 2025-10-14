@@ -20,7 +20,7 @@ const { promisify } = require('util');
 const execAsync = promisify(exec);
 
 const environment = process.argv[2] || 'dev';
-const region = process.env.AWS_REGION || 'us-east-1';
+const region = process.env.AWS_REGION || 'us-east-2';
 
 const tables = [
   {

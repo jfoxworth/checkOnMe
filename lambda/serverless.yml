@@ -3,7 +3,7 @@ service: checkonme-lambda
 provider:
   name: aws
   runtime: nodejs18.x
-  region: ${env:AWS_REGION, 'us-east-1'}
+  region: ${env:AWS_REGION, 'us-east-2'}
   stage: ${opt:stage, 'dev'}
 
   environment:
@@ -12,7 +12,6 @@ provider:
     EMAIL_TOPIC_ARN: ${env:EMAIL_TOPIC_ARN, ''}
     JWT_SECRET: ${env:JWT_SECRET, 'change-this-in-production'}
     WEB_VERIFICATION_URL: ${env:WEB_VERIFICATION_URL, 'https://checkonme.app/verify'}
-    API_BASE_URL: ${env:API_BASE_URL, 'https://api.checkonme.app'}
     ENABLE_SMS: ${env:ENABLE_SMS, 'true'}
     ENABLE_EMAIL: ${env:ENABLE_EMAIL, 'true'}
     ENABLE_WEB_VERIFICATION: ${env:ENABLE_WEB_VERIFICATION, 'true'}
