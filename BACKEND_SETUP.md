@@ -152,7 +152,6 @@ const transaction = await billingService.purchasePlan(userId, {
 Create separate environments:
 
 - Development: `checkonme-*-dev`
-- Staging: `checkonme-*-staging`
 - Production: `checkonme-*-prod`
 
 ### Monitoring

@@ -117,17 +117,17 @@ const smsHelpers = {
  */
 const messageTemplates = {
   checkInReminder(checkInTitle, verificationLink, code, deadline) {
-    return `🚨 CheckOnMe Safety Alert: Time to check in for "${checkInTitle}".
+    return `🚨 FollowUpWithMe Safety Alert: Time to follow up with "${checkInTitle}".
 
 Click to verify: ${verificationLink}
 
-Or open the CheckOnMe app and enter code: ${code}
+Or open the FollowUpWithMe app and enter code: ${code}
 
 Deadline: ${new Date(deadline).toLocaleString()}`;
   },
 
   escalationAlert(userName, checkInTitle, scheduledTime) {
-    return `🚨 SAFETY ALERT: ${userName} failed to check in for "${checkInTitle}" scheduled at ${new Date(scheduledTime).toLocaleString()}. They may need assistance. This is an automated message from CheckOnMe safety app.`;
+    return `🚨 SAFETY ALERT: ${userName} failed to check in for "${checkInTitle}" scheduled at ${new Date(scheduledTime).toLocaleString()}. They may need assistance. This is an automated message from FollowUpWithMe safety app.`;
   },
 
   checkInConfirmed(checkInTitle) {
@@ -135,7 +135,7 @@ Deadline: ${new Date(deadline).toLocaleString()}`;
   },
 
   welcomeMessage(userName) {
-    return `👋 Welcome to CheckOnMe, ${userName}! Your safety app is now set up. You can create check-ins to automatically notify emergency contacts if you don't check in on time.`;
+    return `👋 Welcome to FollowUpWithMe, ${userName}! Your safety app is now set up. You can create check-ins to automatically notify emergency contacts if you don't check in on time.`;
   },
 };
 
